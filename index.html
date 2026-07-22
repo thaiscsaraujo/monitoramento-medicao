@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Calendário de Medições · Painel de Acompanhamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --line:#e7ebee; --line-strong:#d8dee3;
+  --ink:#182230; --ink-2:#55606d; --ink-3:#8a94a0;
+  --nav:#11253c; --nav-2:#1c344f; --nav-ink:#aeb9c6; --nav-active:#3ad08a;
+  --brand:#1f9d5a; --brand-soft:#e6f4ec;
+  --fin:#e08a12; --fin-soft:#fbf0dc;
+  --op:#1f9d5a; --op-bg:#e5f3ea;
+  --at:#d84a44; --at-bg:#fbe7e6;
+  --pe:#b07d1c; --pe-bg:#f8efd9;
+  --em:#4272a6; --em-bg:#e8f0f8;
+  --fu:#b7c0c8; --na:#c4cbd1;
+  --radius:11px;
+  --mono:'Plus Jakarta Sans',system-ui,sans-serif;
+  --display:'Bricolage Grotesque','Plus Jakarta Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+  font-size:13px; line-height:1.45; -webkit-font-smoothing:antialiased; font-feature-settings:'tnum' 1}
+h1,h2,h3{margin:0; font-weight:600; letter-spacing:-.01em; font-family:var(--display)}
+a{color:inherit}
+svg{display:block}
+.ic{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+
+/* ===== layout ===== */
+.app{display:flex; min-height:100vh}
+.sidebar{width:216px; flex:none; background:var(--nav); color:var(--nav-ink); position:sticky; top:0; height:100vh;
+  display:flex; flex-direction:column; padding:18px 14px}
+.brand{display:flex; align-items:center; gap:11px; padding:6px 8px 20px}
+.brand .logo{width:38px; height:38px; border-radius:10px; background:#fff; display:flex; align-items:center; justify-content:center}
+.brand .logo svg{width:22px; height:22px}
+.brand .bt{font-family:var(--display); font-size:15px; color:#fff; font-weight:600; line-height:1.1}
+.brand .bs{font-size:10px; color:var(--nav-ink); letter-spacing:.04em}
+.nav{display:flex; flex-direction:column; gap:2px; margin-top:6px}
+.nav a{display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:8px; font-size:13px;
+  color:var(--nav-ink); cursor:pointer; font-weight:500; text-decoration:none; transition:background .12s,color .12s}
+.nav a:hover{background:var(--nav-2); color:#fff}
+.nav a.on{background:rgba(58,208,138,.14); color:var(--nav-active)}
+.nav a.on .ic{stroke:var(--nav-active)}
+.side-foot{margin-top:auto}
+.side-foot a{display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:8px; font-size:13px; color:var(--nav-ink); cursor:pointer; text-decoration:none}
+.side-foot a:hover{background:var(--nav-2); color:#fff}
+
+.content{flex:1; min-width:0; padding:24px 28px 56px; max-width:1500px}
+
+/* ===== header ===== */
+.top{display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:20px}
+.top h1{font-size:24px}
+.top .sub{color:var(--ink-2); margin-top:5px; font-size:13px}
+.top-r{display:flex; align-items:flex-start; gap:14px}
+.refcard{display:flex; gap:10px; font-size:12px; color:var(--ink-2)}
+.refcard .ic{width:16px; height:16px; color:var(--ink-3); margin-top:1px}
+.refcard b{color:var(--ink); font-weight:600}
+.refcard .src{color:var(--ink-3); font-size:11.5px}
+.btn{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line-strong); background:#fff; color:var(--ink);
+  font-family:inherit; font-size:13px; font-weight:500; padding:8px 14px; border-radius:8px; cursor:pointer; white-space:nowrap}
+.btn:hover{border-color:var(--brand); color:var(--brand)}
+.btn .ic{width:16px; height:16px}
+
+/* ===== KPIs ===== */
+.kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:18px}
+.kpi{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:15px 16px; cursor:pointer;
+  transition:border-color .12s, box-shadow .12s, transform .12s; position:relative}
+.kpi:hover{border-color:var(--brand); box-shadow:0 4px 16px rgba(24,34,48,.07); transform:translateY(-1px)}
+.kpi.accent{border-top:2.5px solid var(--brand)}
+.kpi .khead{display:flex; justify-content:space-between; align-items:flex-start; gap:8px}
+.kpi .lab{font-size:11.5px; color:var(--ink-2); font-weight:500; display:flex; align-items:center; gap:5px}
+.kpi .info{width:13px; height:13px; color:var(--ink-3); cursor:help; flex:none}
+.kpi .kic{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:none}
+.kpi .kic .ic{width:17px; height:17px}
+.kic.g{background:var(--brand-soft); color:var(--brand)} .kic.a{background:var(--fin-soft); color:var(--fin)}
+.kic.r{background:var(--at-bg); color:var(--at)} .kic.y{background:var(--pe-bg); color:var(--pe)}
+.kpi .val{font-size:30px; font-weight:600; margin-top:9px; font-family:var(--display); letter-spacing:-.02em; line-height:1}
+.kpi .val small{font-size:15px; color:var(--ink-3); font-weight:500}
+.kpi .val.good{color:var(--op)} .kpi .val.bad{color:var(--at)} .kpi .val.warn{color:var(--pe)}
+.kpi .krow{display:flex; justify-content:space-between; align-items:center; margin-top:7px}
+.kpi .meta{font-size:11px; color:var(--ink-3)}
+.kpi .delta{display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; padding:2px 7px; border-radius:20px}
+.delta.up{background:var(--op-bg); color:var(--op)} .delta.down{background:var(--at-bg); color:var(--at)} .delta.flat{background:#eef1f3; color:var(--ink-3)}
+.delta .ic{width:12px; height:12px; stroke-width:2.4}
+.kpi .drill{position:absolute; right:16px; bottom:15px; font-size:10.5px; color:var(--brand); font-weight:600; opacity:0; transition:opacity .12s}
+.kpi:hover .drill{opacity:1}
+
+/* ===== panels ===== */
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius)}
+.panel-h{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:15px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap}
+.panel-h h2{font-size:15px; display:flex; align-items:center; gap:6px}
+.panel-h .info{width:13px; height:13px; color:var(--ink-3); cursor:help}
+.panel-h .note{font-size:12px; color:var(--ink-3)}
+.panel-h .link{font-size:12.5px; color:var(--brand); font-weight:600; cursor:pointer}
+.panel-h .link:hover{text-decoration:underline}
+.panel-b{padding:16px 18px}
+
+.mid{display:grid; grid-template-columns:1.62fr 1fr; gap:18px; align-items:start; margin-bottom:18px}
+.mid .left{display:flex; flex-direction:column; gap:18px; min-width:0}
+@media(max-width:1080px){.mid{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.sidebar{display:none} .content{padding:18px}}
+
+/* trend */
+.legend-line{display:flex; gap:18px; align-items:center; font-size:11.5px; color:var(--ink-2); padding:0 4px 4px}
+.legend-line .k{display:inline-flex; align-items:center; gap:6px}
+.legend-line .sw{width:16px; height:3px; border-radius:2px; display:inline-block}
+.legend-line .sw.dash{background:repeating-linear-gradient(90deg,var(--fin) 0 4px,transparent 4px 7px); height:3px}
+
+/* pendências + heatmap combined panel */
+.split{display:grid; grid-template-columns:1fr 1fr}
+.split>div{padding:16px 18px}
+.split>div+div{border-left:1px solid var(--line)}
+.split h3{font-size:13px; color:var(--ink); margin-bottom:12px}
+.donut-wrap{display:flex; align-items:center; gap:16px}
+.donut-legend{display:flex; flex-direction:column; gap:9px; font-size:12px; min-width:0}
+.donut-legend .k{display:grid; grid-template-columns:10px 1fr auto auto; gap:8px; align-items:center; color:var(--ink-2)}
+.donut-legend .dot{width:9px; height:9px; border-radius:50%}
+.donut-legend .n{font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums}
+.donut-legend .pc{color:var(--ink-3); font-size:11px; min-width:38px; text-align:right}
+.heat{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; text-align:center}
+.heat .hm{font-size:10.5px; color:var(--ink-3); font-weight:600; margin-bottom:5px}
+.heat .hb{height:34px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#fff}
+.heat .hn{font-size:11px; color:var(--ink-2); margin-top:5px; font-weight:600}
+.heat-note{font-size:11px; color:var(--ink-3); margin-top:12px}
+
+/* ranking */
+.rank{list-style:none; margin:0; padding:0}
+.rank li{display:grid; grid-template-columns:20px 1fr auto; gap:11px; align-items:center; padding:9px 6px; border-bottom:1px solid #eef1f3; margin:0 -6px; border-radius:6px; cursor:pointer}
+.rank li:last-child{border-bottom:0}
+.rank li:hover{background:#f6f8f9}
+.rank .pos{font-size:12px; color:var(--ink-3); text-align:right; font-variant-numeric:tabular-nums}
+.rank .rn{overflow:hidden}
+.rank .rn b{font-weight:500; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px}
+.rank .rn span{font-size:11px; color:var(--ink-3)}
+.rank .bars{display:flex; align-items:center; gap:9px}
+.rank .barwrap{width:88px; height:6px; background:#eef1f3; border-radius:4px; overflow:hidden}
+.rank .bar{height:100%; background:var(--at); border-radius:4px}
+.rank .rc{font-size:13px; color:var(--at); font-weight:600; min-width:16px; text-align:right; font-variant-numeric:tabular-nums}
+.rank .empty{color:var(--ink-3); font-size:12px; padding:16px 0; text-align:center}
+
+/* filters + matrix */
+.filters{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:14px 18px}
+.filters .flabel{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink); font-weight:600}
+.filters .flabel .ic{width:15px; height:15px; color:var(--ink-2)}
+.fgroup{display:flex; align-items:center; gap:7px}
+.fgroup>label{font-size:11px; color:var(--ink-3); font-weight:500}
+select,input[type=search]{font-family:inherit; font-size:12.5px; color:var(--ink); border:1px solid var(--line-strong);
+  background:#fff; border-radius:8px; padding:7px 10px; outline:none}
+select:focus,input:focus{border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft)}
+.searchbox{position:relative; margin-left:auto}
+.searchbox .ic{position:absolute; right:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--ink-3)}
+.searchbox input{padding-right:30px; min-width:200px}
+.seg{display:inline-flex; border:1px solid var(--line-strong); border-radius:8px; overflow:hidden}
+.seg button{font-family:inherit; font-size:12px; padding:7px 15px; border:0; background:#fff; color:var(--ink-2); cursor:pointer; font-weight:500}
+.seg button+button{border-left:1px solid var(--line-strong)}
+.seg button.on{background:var(--brand); color:#fff}
+.toggle{display:inline-flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-2); cursor:pointer; user-select:none}
+.toggle input{display:none}
+.toggle .tr{width:36px; height:20px; border-radius:20px; background:#d5dbe0; position:relative; transition:background .15s}
+.toggle .tr::after{content:''; position:absolute; left:2px; top:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.toggle input:checked + .tr{background:var(--brand)}
+.toggle input:checked + .tr::after{transform:translateX(16px)}
+
+.matrix-scroll{overflow-x:auto; border-top:1px solid var(--line)}
+table.matrix{border-collapse:separate; border-spacing:0; width:100%; font-size:12px}
+table.matrix th,table.matrix td{padding:0; text-align:center; white-space:nowrap}
+.matrix thead th{position:sticky; top:0; z-index:3; background:#fff; color:var(--ink-2); font-weight:600; font-size:11px;
+  padding:11px 4px; border-bottom:1px solid var(--line-strong)}
+.matrix thead th.future{color:var(--fu)}
+.matrix .c-name{position:sticky; left:0; z-index:2; background:#fff; text-align:left; padding:0 16px; min-width:290px; max-width:290px; border-right:1px solid var(--line)}
+.matrix thead .c-name{z-index:4; padding:11px 16px}
+.matrix .unit-row td{background:var(--brand-soft); text-align:left; padding:7px 16px; font-size:11px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--brand); font-weight:600; position:sticky; left:0}
+.matrix tbody tr:hover .c-name{background:#f7f9fa}
+.crow{border-bottom:1px solid #eef1f3}
+.crow .c-name{padding:0 16px; cursor:pointer}
+.cn-row{display:flex; align-items:baseline; gap:10px; padding:8px 0}
+.cn-name{font-weight:500; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0}
+.crow .c-name:hover .cn-name{color:var(--brand)}
+.cn-rule{font-size:10.5px; color:var(--ink-3); flex:none; font-variant-numeric:tabular-nums}
+.cn-tag{display:inline-block; font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-3); border:1px solid var(--line-strong); border-radius:3px; padding:0 4px; flex:none}
+.cell{width:52px; height:38px; vertical-align:middle}
+.cell .box{margin:4px auto; width:42px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:600; cursor:default; font-variant-numeric:tabular-nums}
+.box.op{background:var(--op-bg); color:var(--op)} .box.at{background:var(--at-bg); color:var(--at)}
+.box.pe{background:var(--pe-bg); color:var(--pe)} .box.em{background:var(--em-bg); color:var(--em)}
+.box.fu{background:#f2f4f6; color:var(--fu)} .box.na{background:#f2f4f6; color:var(--na)}
+.box.op.ok::after{content:'✓'}
+
+/* modal */
+.modal-back{position:fixed; inset:0; background:rgba(18,28,42,.42); display:flex; align-items:flex-start; justify-content:center; padding:44px 16px; z-index:80; overflow:auto}
+.modal-back[hidden]{display:none}
+.modal{background:#fff; border-radius:12px; max-width:800px; width:100%; box-shadow:0 24px 66px rgba(18,28,42,.32); animation:pop .14s ease-out}
+@keyframes pop{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+@media(prefers-reduced-motion:reduce){.modal{animation:none} .kpi{transition:none}}
+.modal-h{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:17px 22px; border-bottom:1px solid var(--line)}
+.modal-h h3{font-size:17px; margin-bottom:2px}
+.modal-h .msub{font-size:11.5px; color:var(--ink-3)}
+.modal-h button{border:0; background:none; font-size:25px; line-height:.7; color:var(--ink-3); cursor:pointer; padding:2px 5px; border-radius:6px}
+.modal-h button:hover{background:#f0f2f4; color:var(--ink)}
+.modal-b{padding:16px 22px 24px; max-height:72vh; overflow:auto}
+.dmeta{font-size:11.5px; color:var(--ink-3); margin:0 0 14px} .dmeta code{font-family:var(--mono); background:#f0f2f4; padding:1px 6px; border-radius:5px; color:var(--ink); font-weight:600}
+.dsum{display:flex; gap:24px; flex-wrap:wrap; margin-bottom:16px}
+.dsum .b{font-size:11.5px; color:var(--ink-2)}
+.dsum .b b{font-family:var(--display); font-size:22px; color:var(--ink); display:block; line-height:1.1}
+.dsum .b b.op{color:var(--op)} .dsum .b b.at{color:var(--at)}
+table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
+.dtable th{text-align:left; font-weight:600; color:var(--ink-2); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; padding:7px 10px; border-bottom:1px solid var(--line-strong); position:sticky; top:0; background:#fff}
+.dtable td{padding:8px 10px; border-bottom:1px solid #eef1f3; vertical-align:middle}
+.dtable tr:last-child td{border-bottom:0}
+.dtable td.mth{font-weight:600; color:var(--ink-2)}
+.dt-date{font-weight:600; font-variant-numeric:tabular-nums}
+.dt-obs{color:var(--ink-3); font-style:italic}
+.lnk{color:var(--brand); cursor:pointer; font-weight:500}
+.lnk:hover{text-decoration:underline}
+.pill{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; white-space:nowrap}
+.pill .d{width:6px; height:6px; border-radius:50%; flex:none}
+.pill.p-op{background:var(--op-bg); color:var(--op)} .pill.p-op .d{background:var(--op)}
+.pill.p-at{background:var(--at-bg); color:var(--at)} .pill.p-at .d{background:var(--at)}
+.pill.p-pe{background:var(--pe-bg); color:var(--pe)} .pill.p-pe .d{background:var(--pe)}
+.pill.p-em{background:var(--em-bg); color:var(--em)} .pill.p-em .d{background:var(--em)}
+.pill.p-fu{background:#f1f3f5; color:var(--ink-3)} .pill.p-fu .d{background:var(--fu)}
+.pill.p-na{background:#f1f3f5; color:var(--ink-3)} .pill.p-na .d{background:var(--na)}
+
+#tt{position:fixed; z-index:90; pointer-events:none; background:var(--ink); color:#fff; border-radius:7px; padding:9px 11px;
+  font-size:11.5px; line-height:1.5; max-width:290px; box-shadow:0 6px 22px rgba(18,28,42,.24); opacity:0; transition:opacity .1s; display:none}
+#tt b{color:#fff} #tt .row{color:#c7cfd8} #tt .dt{color:#fff; font-weight:600}
+#tt .st-op{color:#8fd8b0} #tt .st-at{color:#eca29d} #tt .st-pe{color:#e3c079} #tt .st-em{color:#a7c1dc}
+
+/* ---- estados de carregamento / erro / avisos ---- */
+.loadbox{display:flex;align-items:center;gap:14px;justify-content:center;padding:70px 20px;color:var(--ink-2);font-size:13.5px;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.spin{width:22px;height:22px;border:2.5px solid var(--line-strong);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation-duration:2.5s}}
+.errbox{background:#fff;border:1px solid var(--at);border-left:4px solid var(--at);border-radius:var(--radius);padding:18px 20px;color:var(--ink)}
+.errbox h3{color:var(--at);font-size:15px;margin-bottom:6px}
+.errbox p{margin:0 0 10px;color:var(--ink-2);font-size:12.5px;line-height:1.6}
+.errbox code{font-family:var(--mono);background:#f5f6f7;padding:2px 6px;border-radius:5px;font-size:11.5px;word-break:break-word}
+.warn{background:var(--pe-bg);border:1px solid rgba(176,125,28,.3);border-radius:9px;padding:10px 14px;margin-bottom:16px;
+  font-size:12.5px;color:#7d5a12;display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.warn b{font-weight:600}
+/* ---- novo status: dado faltando ---- */
+.box.df{background:#eceff2;color:#77838f}
+.pill.p-df{background:#eceff2;color:#68737e} .pill.p-df .d{background:#98a2ac}
+.chip.df{background:#eceff2;border:1px solid var(--line-strong)}
+/* ---- marcador de justificativa pendente ---- */
+.cell .box{position:relative}
+.box .jp{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--pe);border:1.5px solid #fff}
+.jpchip{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:#7d5a12;background:var(--pe-bg);
+  border:1px solid rgba(176,125,28,.3);border-radius:20px;padding:4px 12px;cursor:pointer}
+.jpchip:hover{border-color:var(--pe)}
+.jpchip .d{width:7px;height:7px;border-radius:50%;background:var(--pe)}
+.updated{font-size:11px;color:var(--ink-3)}
+
+.mlegend{display:flex;flex-wrap:wrap;gap:10px 20px;padding:13px 18px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-2)}
+.mlegend .k{display:flex;align-items:center;gap:7px}
+.mlegend .lg{color:var(--ink-3)}
+.mlegend .chip{width:20px;height:14px;border-radius:4px;flex:none}
+.mlegend .chip.op{background:var(--op-bg);border:1px solid rgba(31,157,90,.3)}
+.mlegend .chip.at{background:var(--at-bg);border:1px solid rgba(216,74,68,.3)}
+.mlegend .chip.pe{background:var(--pe-bg);border:1px solid rgba(176,125,28,.3)}
+.mlegend .chip.em{background:var(--em-bg);border:1px solid rgba(66,114,166,.3)}
+.mlegend .chip.df{background:#eceff2;border:1px solid var(--line-strong)}
+.mlegend .chip.na{background:#f2f4f6;border:1px solid var(--line-strong)}
+.mlegend .chip.fu{background:#f2f4f6;border:1px solid var(--line)}
+.mlegend .jpdot{width:9px;height:9px;border-radius:50%;background:var(--pe);flex:none}
+.foot{margin-top:22px; font-size:11px; color:var(--ink-3)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="12" width="4" height="8" rx="1" fill="#1f9d5a"/><rect x="10" y="7" width="4" height="13" rx="1" fill="#1f9d5a"/><rect x="17" y="3" width="4" height="17" rx="1" fill="#3ad08a"/></svg></div>
+      <div><div class="bt">Medições</div><div class="bs">CSC · Univale</div></div>
+    </div>
+    <nav class="nav" id="nav">
+      <a data-act="top" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg>Resumo</a>
+      <a data-act="matrix"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Matriz</a>
+      <a data-act="contratos"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7M9 17h7"/></svg>Contratos</a>
+      <a data-act="pend"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Pendências</a>
+      <a data-act="export"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h9l3 3v13H4z" transform="translate(2 0)"/><path d="M9 12h6M12 9v6"/></svg>Relatórios</a>
+      <a data-act="config"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 2h-4.4l-.4 2.4a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-.9c.6.5 1.3.9 2 1.2l.4 2.4h4.4l.4-2.4c.7-.3 1.4-.7 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></svg>Configurações</a>
+    </nav>
+    <div class="side-foot">
+      <a data-act="ajuda"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3"/><path d="M12 17h.01"/></svg>Ajuda</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="top" id="top">
+      <div>
+        <h1>Calendário de Entrega das Medições — 2026</h1>
+        <div class="sub">Entrega ao cliente e liberação para faturamento, contrato a contrato, mês a mês.</div>
+      </div>
+      <div class="top-r">
+        <div class="refcard">
+          <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+          <div>Mês de referência: <b id="refMonth">—</b><br>
+            <span class="src">Fonte: CALENDÁRIO DE ENTREGA DAS MEDIÇÕES · Drive</span><br>
+            <span class="src" id="genAt"></span></div>
+        </div>
+        <button class="btn" id="refreshBtn" title="Reler a planilha"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>Atualizar</button>
+        <button class="btn" id="exportBtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v3h16v-3"/></svg>Exportar</button>
+      </div>
+    </div>
+
+    <div id="warnBanner" class="warn" hidden></div>
+    <div id="loadState" class="loadbox">
+      <div class="spin"></div><div>Lendo a planilha do Drive…</div>
+    </div>
+    <div id="errState" class="errbox" hidden></div>
+    <div id="dash" hidden>
+    <div class="kpis" id="kpis"></div>
+
+    <div class="mid">
+      <div class="left">
+        <div class="panel">
+          <div class="panel-h">
+            <h2>Evolução do % no prazo <svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/><title>% de entregas dentro da regra de prazo, por mês. Linha cheia = Cliente, tracejada = Financeiro.</title></svg></h2>
+            <span class="note">Cliente × Financeiro, por mês</span>
+          </div>
+          <div class="panel-b">
+            <div class="legend-line">
+              <span class="k"><span class="sw" style="background:var(--brand)"></span> Cliente (medição)</span>
+              <span class="k"><span class="sw dash"></span> Financeiro (faturamento)</span>
+            </div>
+            <div id="chart"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="split">
+            <div>
+              <h3>Pendências por status</h3>
+              <div class="donut-wrap"><div id="donut"></div><div class="donut-legend" id="donutLegend"></div></div>
+            </div>
+            <div>
+              <h3>Atrasos por mês (jan–jul)</h3>
+              <div class="heat" id="heat"></div>
+              <div class="heat-note">Total de ocorrências (cliente + financeiro) em cada mês.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><h2>Contratos com mais atrasos</h2><span class="link" id="rankAll">Ver todos</span></div>
+        <div class="panel-b"><ol class="rank" id="rank"></ol></div>
+      </div>
+    </div>
+
+    <div class="panel" id="matrixPanel">
+      <div class="filters">
+        <span class="flabel"><svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>Filtros</span>
+        <div class="fgroup"><label>Visão</label>
+          <div class="seg" id="stageSeg"><button data-stage="cli" class="on">Cliente</button><button data-stage="fin">Financeiro</button></div>
+        </div>
+        <div class="fgroup"><label>Unidade</label><select id="unitSel"><option value="">Todas as unidades</option></select></div>
+        <div class="fgroup"><label>Status</label><select id="statusSel">
+          <option value="">Todos</option><option value="no_prazo">No prazo</option><option value="atraso">Atraso</option>
+          <option value="pendente">Pendente</option><option value="em_andamento">Em andamento</option>
+          <option value="dado_faltando">Dado faltando</option><option value="nao_aplicavel">Não aplicável</option><option value="futuro">Futuro</option><option value="__jp">Justificativa pendente</option></select></div>
+        <div class="fgroup"><label>Contratos</label><select id="scopeSel">
+          <option value="">Todos os contratos</option><option value="ativos">Somente ativos</option><option value="inativos">Não iniciados</option></select></div>
+        <label class="toggle"><input type="checkbox" id="onlyLate"><span class="tr"></span>Apenas atrasados</label>
+        <div class="searchbox"><input type="search" id="search" placeholder="Buscar contrato…"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+      </div>
+      <div class="panel-h" style="border-top:1px solid var(--line)"><h2 id="matrixTitle">Matriz de status — Cliente</h2><span class="note" id="matrixCount"></span></div>
+      <div class="matrix-scroll"><table class="matrix" id="matrix"></table></div>
+      <div class="mlegend">
+        <span class="k"><span class="chip op"></span> No prazo</span>
+        <span class="k"><span class="chip at"></span> Atraso</span>
+        <span class="k"><span class="chip pe"></span> Pendente</span>
+        <span class="k"><span class="chip em"></span> Em andamento</span>
+        <span class="k"><span class="chip df"></span> Dado faltando <span class="lg">“?” na planilha</span></span>
+        <span class="k"><span class="chip na"></span> Não aplicável <span class="lg">“-” ou sem medição</span></span>
+        <span class="k"><span class="chip fu"></span> Futuro</span>
+        <span class="k"><span class="jpdot"></span> Justificativa pendente</span>
+        <span class="k lg">O número na célula é o dia da entrega.</span>
+      </div>
+    </div>
+
+    </div>
+    <div class="foot">Painel lido diretamente da planilha do Drive (somente leitura). Premissas de classificação no menu Ajuda.</div>
+  </main>
+</div>
+
+<div id="tt"></div>
+<div id="modal" class="modal-back" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h"><div><h3 id="mTitle"></h3><div class="msub" id="mSub"></div></div><button id="mClose" aria-label="Fechar">&times;</button></div>
+    <div class="modal-b" id="mBody"></div>
+  </div>
+</div>
+
+<script>const STLAB={no_prazo:['op','No prazo'],atraso:['at','Atraso'],pendente:['pe','Pendente'],
+  em_andamento:['em','Em andamento'],futuro:['fu','Futuro'],nao_aplicavel:['na','Não aplicável'],
+  nao_iniciado:['na','Não iniciado'],entregue:['op','Entregue'],dado_faltando:['df','Dado faltando']};
+
+var usel;
+var stage='cli';
+const state={unit:'',q:'',status:'',scope:'',onlyLate:false};
+
+const MFULL = {JAN:'janeiro',FEV:'fevereiro',MAR:'março',ABR:'abril',MAI:'maio',JUN:'junho',JUL:'julho',AGO:'agosto',SET:'setembro',OUT:'outubro',NOV:'novembro',DEZ:'dezembro'};
+const cap=s=>s[0].toUpperCase()+s.slice(1);
+
+/* ============ bootstrap ============ */
+var DATA=null, MONTHS, CUR, CURNAME, PREVNAME;
+
+/* ═══════════════════════════════════════════════════════════════
+   1) Publique a aba CALENDÁRIO como CSV
+      (Arquivo → Compartilhar → Publicar na web → aba CALENDÁRIO → CSV)
+   2) Cole a URL gerada aqui embaixo:
+   ═══════════════════════════════════════════════════════════════ */
+var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQmJyfv37GLtDzE87sjZZINmf_b9te9YWeJRaJLt6aPc4Zsvj7PPrpQApoyyylhg8TUJ4sPgKdMnepb/pub?gid=355965128&single=true&output=csv';
+
+var CONFIG = {
+  YEAR: 2026,
+  MONTH_ROW: 3,        // linha com JAN, FEV, ...
+  LABEL_ROW: 4,        // linha com CLIENTE / LUCIENE / OBSERVAÇÃO / CHECK
+  FIRST_DATA_ROW: 5,
+  COL_NAME: 1,         // A — contrato
+  COL_RULE_CLI: 2,     // B — prazo de entrega ao cliente
+  COL_RULE_FIN: 3,     // C — prazo de envio ao financeiro
+  MONTH_ORDER: ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'],
+  CURRENT_MONTH_OVERRIDE: null
+};
+
+function currentMonth(){
+  if (CONFIG.CURRENT_MONTH_OVERRIDE) return CONFIG.CURRENT_MONTH_OVERRIDE;
+  var now = new Date();
+  if (now.getFullYear() < CONFIG.YEAR) return 1;
+  if (now.getFullYear() > CONFIG.YEAR) return 12;
+  return now.getMonth() + 1;
+}
+
+/* Leitor de CSV (RFC 4180): trata vírgula, aspas e quebra de linha dentro do campo. */
+function parseCSV(text){
+  text = String(text).replace(/^\uFEFF/, '');
+  var rows = [], row = [], field = '', i = 0, inQ = false;
+  while (i < text.length){
+    var c = text.charAt(i);
+    if (inQ){
+      if (c === '"'){
+        if (text.charAt(i+1) === '"'){ field += '"'; i += 2; continue; }
+        inQ = false; i++; continue;
+      }
+      field += c; i++; continue;
+    }
+    if (c === '"'){ inQ = true; i++; continue; }
+    if (c === ','){ row.push(field); field = ''; i++; continue; }
+    if (c === '\r'){ i++; continue; }
+    if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+    field += c; i++;
+  }
+  if (field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+/*  ────────────────────  LÓGICA (testável)  ──────────────────── */
+
+/** Desfaz mesclagens: repete o último valor não vazio para a direita. */
+function forwardFill(row) {
+  var out = [], last = '';
+  for (var i = 0; i < row.length; i++) {
+    var v = row[i] == null ? '' : String(row[i]).trim();
+    if (v !== '') last = v;
+    out.push(last);
+  }
+  return out;
+}
+
+/** Localiza os blocos de mês pelos rótulos, não pela posição fixa. */
+function findMonthBlocks(grid, warnings) {
+  var months = forwardFill(grid[CONFIG.MONTH_ROW - 1] || []);
+  var labels = (grid[CONFIG.LABEL_ROW - 1] || []).map(function (v) {
+    return v == null ? '' : String(v).trim().toUpperCase();
+  });
+  var blocks = {};
+  for (var c = CONFIG.COL_RULE_FIN; c < labels.length; c++) {
+    var label = labels[c];
+    if (!label) continue;
+    var mon = (months[c] || '').toUpperCase();
+    if (CONFIG.MONTH_ORDER.indexOf(mon) === -1) continue;
+    if (!blocks[mon]) blocks[mon] = { name: mon, idx: CONFIG.MONTH_ORDER.indexOf(mon) + 1 };
+    if (label.indexOf('CLIENTE') === 0) blocks[mon].cli = c;
+    else if (label.indexOf('LUCIENE') === 0) blocks[mon].fin = c;
+    else if (label.indexOf('OBSERVA') === 0) blocks[mon].obs = c;
+    else if (label.indexOf('CHECK') === 0) blocks[mon].chk = c;
+  }
+  var list = [];
+  CONFIG.MONTH_ORDER.forEach(function (m) {
+    if (blocks[m] && blocks[m].cli != null && blocks[m].fin != null) list.push(blocks[m]);
+    else warnings.push('Bloco do mês ' + m + ' não localizado no cabeçalho.');
+  });
+  return list;
+}
+
+/** Interpreta "ATÉ O DIA 05", "TODO DIA 20", "ÚLTIMO DIA DO MÊS", "2º DIA ÚTIL". */
+function parseRule(txt) {
+  var raw = txt == null ? '' : String(txt).trim();
+  if (raw === '' || raw === '-') return { kind: 'none', raw: raw };
+  var up = raw.toUpperCase();
+  if (up.indexOf('ULTIMO') !== -1 || up.indexOf('ÚLTIMO') !== -1) return { kind: 'ultimo', raw: raw };
+  var mUtil = up.match(/(\d{1,2})\s*[ºO°]?\s*DIA\s*[ÚU]TIL/);
+  if (mUtil) return { kind: 'util', n: parseInt(mUtil[1], 10), raw: raw };
+  var mDay = up.match(/DIA\s*(\d{1,2})/);
+  if (mDay) return { kind: 'day', day: parseInt(mDay[1], 10), raw: raw };
+  return { kind: 'none', raw: raw };
+}
+
+/** N-ésimo dia útil (seg–sex). Feriados não são considerados. */
+function nthBusinessDay(year, month, n) {
+  var d = new Date(year, month - 1, 1), count = 0;
+  while (d.getMonth() === month - 1) {
+    var wd = d.getDay();
+    if (wd !== 0 && wd !== 6) {
+      count++;
+      if (count === n) return new Date(d.getTime());
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return null;
+}
+
+/**
+ * Classifica o conteúdo de uma célula de entrega.
+ *  ''        → empty
+ *  '-'       → na       (não se aplica naquele mês / atendimento encerrado)
+ *  '?'       → missing  (dado a inserir)
+ *  'OK'      → ok
+ *  Data      → date
+ *  '03/07'   → date (texto no formato dd/mm)
+ *  outro     → text
+ */
+function cellKind(v, year) {
+  if (v == null || v === '') return { kind: 'empty' };
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return { kind: 'date', date: new Date(v.getFullYear(), v.getMonth(), v.getDate()) };
+  }
+  if (v && v.__date__) { // usado apenas nos testes fora do Apps Script
+    var p = v.__date__.split('-');
+    return { kind: 'date', date: new Date(+p[0], +p[1] - 1, +p[2]) };
+  }
+  var s = String(v).trim();
+  if (s === '') return { kind: 'empty' };
+  if (s === '-' || s === '--' || s === '–') return { kind: 'na' };
+  if (s === '?' || s === '??') return { kind: 'missing' };
+  if (s.toUpperCase() === 'OK') return { kind: 'ok' };
+  var m = s.match(/^(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(\d{2,4}))?$/);
+  if (m) {
+    var yy = m[3] ? (m[3].length === 2 ? 2000 + (+m[3]) : +m[3]) : year;
+    return { kind: 'date', date: new Date(yy, (+m[2]) - 1, +m[1]) };
+  }
+  return { kind: 'text', text: s };
+}
+
+/** true = no prazo, false = atraso, null = não avaliável. */
+function withinRule(date, rule, year, monthIdx) {
+  if (!rule) return null;
+  if (rule.kind === 'day') return date.getDate() <= rule.day;
+  if (rule.kind === 'ultimo') return true;
+  if (rule.kind === 'util') {
+    var limit = nthBusinessDay(year, monthIdx, rule.n);
+    if (!limit) return null;
+    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return d.getTime() <= limit.getTime();
+  }
+  return null;
+}
+
+/** Observação que é lembrete de preencher, não justificativa. */
+function isPendingJustification(obs) {
+  if (!obs) return false;
+  return /INSERIR\s+(O\s+)?(PQ|PORQU|MOTIVO|JUSTIF)/i.test(String(obs));
+}
+
+/** Nome curto e legível a partir do texto completo da coluna A. */
+function shortName(full) {
+  var s = String(full).trim();
+  s = s.split(/\s[-–]\s*REF/i)[0];
+  s = s.split('(')[0];
+  s = s.split(/[\w.\-]+@/)[0];
+  s = s.split(/\bMANDAR\b|\bENVIAR\b|\bEMITIR\b|\bE-MAIL\b|</i)[0];
+  s = s.replace(/^[\s\-–:.,]+|[\s\-–:.,]+$/g, '');
+  if (s.length < 3) s = String(full).trim().substring(0, 40);
+  return s.substring(0, 48);
+}
+
+function isUnitBanner(name, ruleB, ruleC) {
+  if (ruleB !== '' || ruleC !== '') return false;
+  var up = name.toUpperCase();
+  return up === 'MATRIZ' || up.indexOf('FILIAL') === 0 || up.indexOf('UNIDADE') === 0;
+}
+
+/*  ─────────────────────  MONTAGEM DOS DADOS  ───────────────────── */
+
+function buildData(grid, curMonth) {
+  var warnings = [];
+  var blocks = findMonthBlocks(grid, warnings);
+  var year = CONFIG.YEAR;
+  var contracts = [];
+  var unit = null;
+  var blankStreak = 0;
+
+  for (var r = CONFIG.FIRST_DATA_ROW - 1; r < grid.length; r++) {
+    var row = grid[r] || [];
+    var name = row[CONFIG.COL_NAME - 1] == null ? '' : String(row[CONFIG.COL_NAME - 1]).trim();
+    var ruleB = row[CONFIG.COL_RULE_CLI - 1] == null ? '' : String(row[CONFIG.COL_RULE_CLI - 1]).trim();
+    var ruleC = row[CONFIG.COL_RULE_FIN - 1] == null ? '' : String(row[CONFIG.COL_RULE_FIN - 1]).trim();
+
+    if (name === '' && ruleB === '' && ruleC === '') {
+      if (++blankStreak > 12) break;   // fim da tabela
+      continue;
+    }
+    blankStreak = 0;
+
+    // Encerra ao chegar em seções de notas depois da tabela principal
+    if (/PARTICULARIDADE|OBSERVA[ÇC][ÕO]ES GERAIS|LEGENDA/i.test(name)) break;
+    if (name === '') continue;
+
+    if (isUnitBanner(name, ruleB, ruleC)) { unit = name; continue; }
+    if (ruleB === '' && ruleC === '') { warnings.push('Linha ' + (r + 1) + ' ignorada: "' + name + '".'); continue; }
+    if (!unit) { warnings.push('Contrato antes de qualquer unidade: "' + name + '".'); }
+
+    var rc = parseRule(ruleB), rf = parseRule(ruleC);
+    if (rc.kind === 'none' && ruleB !== '' && ruleB !== '-') {
+      warnings.push('Prazo do cliente não interpretado em "' + name + '": "' + ruleB + '".');
+    }
+
+    var months = {}, active = false, delays = 0, pendingJust = 0;
+
+    // 1ª passada: lê as células
+    blocks.forEach(function (b) {
+      var cli = cellKind(row[b.cli], year);
+      var fin = cellKind(row[b.fin], year);
+      var obs = b.obs != null && row[b.obs] != null ? String(row[b.obs]).trim() : '';
+      var chk = b.chk != null && row[b.chk] != null ? String(row[b.chk]).trim() : '';
+      if (cli.kind === 'ok' || cli.kind === 'date' || cli.kind === 'text') active = true;
+      months[b.name] = { _cli: cli, _fin: fin, obs: obs || null, chk: chk || null, idx: b.idx };
+    });
+
+    // 2ª passada: classifica
+    blocks.forEach(function (b) {
+      var m = months[b.name];
+      var cli = m._cli, fin = m._fin;
+      var future = b.idx > curMonth, current = b.idx === curMonth;
+      var cs, fs;
+
+      /* ---- etapa CLIENTE ---- */
+      if (cli.kind === 'na') cs = 'nao_aplicavel';
+      else if (future) cs = 'futuro';
+      else if (!active) cs = 'nao_iniciado';
+      else if (cli.kind === 'ok') cs = 'no_prazo';
+      else if (cli.kind === 'missing') cs = 'dado_faltando';
+      else if (cli.kind === 'date') {
+        var okc = withinRule(cli.date, rc, year, b.idx);
+        cs = okc === null ? 'entregue' : (okc ? 'no_prazo' : 'atraso');
+      }
+      else if (cli.kind === 'text') cs = 'entregue';
+      else cs = current ? 'em_andamento' : 'nao_aplicavel';
+
+      /* ---- etapa FINANCEIRO ---- */
+      var delivered = (cli.kind === 'ok' || cli.kind === 'date' || cli.kind === 'text');
+      if (fin.kind === 'na' || cli.kind === 'na') fs = 'nao_aplicavel';
+      else if (future) fs = 'futuro';
+      else if (!active) fs = 'nao_iniciado';
+      else if (!delivered) fs = current ? 'em_andamento' : 'nao_aplicavel';
+      else if (fin.kind === 'ok') fs = 'no_prazo';
+      else if (fin.kind === 'missing') fs = 'dado_faltando';
+      else if (fin.kind === 'date') {
+        var okf = withinRule(fin.date, rf, year, b.idx);
+        fs = okf === null ? 'entregue' : (okf ? 'no_prazo' : 'atraso');
+      }
+      else if (fin.kind === 'text') fs = 'entregue';
+      else fs = current ? 'em_andamento' : 'pendente';
+
+      if (cs === 'atraso') delays++;
+      if (fs === 'atraso') delays++;
+
+      var jp = isPendingJustification(m.obs);
+      if (jp) pendingJust++;
+
+      months[b.name] = {
+        cs: cs, fs: fs,
+        cd: cli.kind === 'date' ? iso(cli.date) : null,
+        fd: fin.kind === 'date' ? iso(fin.date) : null,
+        obs: jp ? null : m.obs,
+        jp: jp,
+        chk: m.chk
+      };
+    });
+
+    contracts.push({
+      unit: unit || 'SEM UNIDADE',
+      name: shortName(name),
+      full: String(name).replace(/\s+/g, ' '),
+      rc: rc.raw, rf: rf.raw,
+      active: active, atr: delays, jp: pendingJust,
+      m: months
+    });
+  }
+
+  return {
+    meta: {
+      current_month: curMonth,
+      year: year,
+      months: blocks.map(function (b) {
+        return { name: b.name, idx: b.idx, future: b.idx > curMonth };
+      }),
+      generated_at: new Date().toISOString(),
+      warnings: warnings
+    },
+    contracts: contracts
+  };
+}
+
+function iso(d) {
+  function p(n) { return (n < 10 ? '0' : '') + n; }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+
+
+function boot(){
+  if (window.__MOCK_CSV__) { return handleCsv(window.__MOCK_CSV__); }
+  if (!CSV_URL || CSV_URL.indexOf('http') !== 0){
+    return fail({message:'Configure a constante CSV_URL no topo do arquivo com o endereço CSV publicado.'});
+  }
+  fetch(CSV_URL, {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(handleCsv)
+    .catch(function(err){
+      fail({message:'Não consegui baixar o CSV. ('+(err&&err.message?err.message:'erro de rede')+')'});
+    });
+}
+
+function handleCsv(text){
+  try{
+    if (/^\s*<(!doctype|html)/i.test(text)){
+      return fail({message:'O endereço devolveu uma página HTML, não um CSV. Confira se a publicação está como CSV e se a aba escolhida é a CALENDÁRIO.'});
+    }
+    var grid = parseCSV(text);
+    if (grid.length < CONFIG.FIRST_DATA_ROW){
+      return fail({message:'O CSV veio com apenas '+grid.length+' linhas — parece estar vazio ou ser outra aba.'});
+    }
+    var data = buildData(grid, currentMonth());
+    if (!data.contracts.length){
+      return fail({message:'Nenhum contrato reconhecido. Confira se a aba publicada é a CALENDÁRIO.'});
+    }
+    data.meta.generated_at = new Date().toISOString();
+    init(data);
+  }catch(err){
+    fail({message:'Falha ao interpretar o CSV: '+(err&&err.message?err.message:err)});
+  }
+}
+
+function fail(err){
+  document.getElementById('loadState').hidden=true;
+  var e=document.getElementById('errState'); e.hidden=false;
+  e.innerHTML='<h3>Não consegui ler a planilha</h3>'+
+    '<p>Confira a constante <code>CSV_URL</code> no topo do arquivo e se a aba CALENDÁRIO está publicada na web no formato CSV.</p>'+
+    '<p><code>'+((err&&err.message)?String(err.message):'erro desconhecido')+'</code></p>';
+}
+function init(d){
+  DATA=d;
+  document.getElementById('loadState').hidden=true;
+  document.getElementById('dash').hidden=false;
+  setup();
+  renderAll();
+}
+
+/* ============ setup ============ */
+function setup(){
+MONTHS = DATA.meta.months;
+CUR = DATA.meta.current_month;
+CURNAME = MONTHS.find(m=>m.idx===CUR).name;
+PREVNAME = MONTHS.find(m=>m.idx===CUR-1) ? MONTHS.find(m=>m.idx===CUR-1).name : null;
+document.getElementById('refMonth').textContent = cap(MFULL[CURNAME])+' / 2026';
+var gen=DATA.meta.generated_at?new Date(DATA.meta.generated_at):new Date();
+document.getElementById('genAt').textContent='Lido da planilha em '+gen.toLocaleDateString('pt-BR')+' '+gen.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+var w=DATA.meta.warnings||[];
+if(w.length){var wb=document.getElementById('warnBanner');wb.hidden=false;
+  wb.innerHTML='<span>&#9888;</span><span><b>'+w.length+(w.length>1?' avisos':' aviso')+' de leitura</b> — linhas ou prazos que o script não conseguiu interpretar. Clique para ver.</span>';
+  wb.onclick=function(){openModal('Avisos de leitura','Pontos que merecem conferência na planilha',
+    '<ul style="margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;line-height:1.7">'+
+    w.map(function(x){return '<li>'+String(x).replace(/</g,'&lt;')+'</li>';}).join('')+'</ul>');};}
+document.getElementById('unitSel').innerHTML='<option value="">Todas as unidades</option>';
+
+usel=document.getElementById('unitSel');
+[...new Set(DATA.contracts.map(c=>c.unit))].forEach(u=>{const o=document.createElement('option');o.value=u;o.textContent=u;usel.appendChild(o);});
+}
+
+/* ============ helpers ============ */
+const fmtDate=iso=>{ if(!iso)return ''; const[y,m,d]=iso.split('-'); return d+'/'+m; };
+const statusOf=(c,mn)=> stage==='cli'?c.m[mn].cs:c.m[mn].fs;
+const dateOf=(c,mn)=> stage==='cli'?c.m[mn].cd:c.m[mn].fd;
+const ruleOf=c=> stage==='cli'?c.rc:c.rf;
+const delaysOf=(c,st)=>{let n=0;for(const mn in c.m){if((st==='cli'?c.m[mn].cs:c.m[mn].fs)==='atraso')n++;}return n;};
+const totalDelays=c=>delaysOf(c,'cli')+delaysOf(c,'fin');
+const pct=(np,at)=>{const t=np+at;return t?Math.round(np/t*100):null;};
+
+/* global filter = unit + search (affects overview + matrix) */
+function globalFilter(){
+  return DATA.contracts.filter(c=>
+    (!state.unit||c.unit===state.unit) &&
+    (!state.q||(c.name+' '+c.full).toLowerCase().includes(state.q)));
+}
+/* matrix filter = global + status + scope + onlyLate */
+function matrixFilter(){
+  return globalFilter().filter(c=>{
+    if(state.scope==='ativos'&&!c.active) return false;
+    if(state.scope==='inativos'&&c.active) return false;
+    if(state.onlyLate&&totalDelays(c)===0) return false;
+    if(state.status==='__jp'){ if(!MONTHS.some(mo=>c.m[mo.name].jp)) return false; }
+    else if(state.status){ const s=stage==='cli'?c.m[CURNAME].cs:c.m[CURNAME].fs; if(s!==state.status) return false; }
+    return true;
+  });
+}
+
+/* ============ KPIs ============ */
+function stageCounts(list,which,mn){
+  let np=0,at=0; list.forEach(c=>{const s=which==='cli'?c.m[mn].cs:c.m[mn].fs;
+    if(s==='no_prazo')np++; else if(s==='atraso')at++;}); return {np,at};
+}
+function deltaHtml(which,list){
+  if(!PREVNAME) return '';
+  const cur=pct(...Object.values(stageCounts(list,which,CURNAME)));
+  const prev=pct(...Object.values(stageCounts(list,which,PREVNAME)));
+  if(cur===null||prev===null) return '<span class="delta flat">— sem base</span>';
+  const d=cur-prev, cls=d>0?'up':d<0?'down':'flat';
+  const arrow=d>0?'<path d="M12 19V5M6 11l6-6 6 6"/>':d<0?'<path d="M12 5v14M6 13l6 6 6-6"/>':'<path d="M5 12h14"/>';
+  return `<span class="delta ${cls}"><svg class="ic" viewBox="0 0 24 24">${arrow}</svg>${Math.abs(d)} p.p.</span>`;
+}
+const ICO={
+  doc:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6M15 20a6 6 0 0 1 6-4"/>',
+  dollar:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.5 9.2A2.4 2.4 0 0 0 12 8c-1.5 0-2.5.8-2.5 2s1 1.8 2.5 2 2.5.9 2.5 2-1 2-2.5 2a2.4 2.4 0 0 1-2.5-1.2"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/>',
+  clip:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 11h6M9 15h4"/>'};
+function renderKpis(){
+  const list=globalFilter();
+  const active=list.filter(c=>c.active).length;
+  const cc=stageCounts(list,'cli',CURNAME), fc=stageCounts(list,'fin',CURNAME);
+  const pc=pct(cc.np,cc.at), pf=pct(fc.np,fc.at);
+  let delays=cc.at+fc.at, pend=0;
+  list.forEach(c=>{['cs','fs'].forEach(k=>{const s=c.m[CURNAME][k]; if(s==='pendente'||s==='em_andamento')pend++;});});
+  const clsP=v=>v===null?'':v>=90?'good':v>=75?'warn':'bad';
+  const info=t=>`<svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/><title>${t}</title></svg>`;
+  const K=[
+    {key:'total',ic:'doc',ick:'g',lab:'Contratos monitorados',tip:'Total de contratos no calendário (todas as unidades, salvo filtro).',val:list.length,meta:active+' ativos no ano'},
+    {key:'cli',ic:'users',ick:'g',lab:`No prazo — Cliente (${CURNAME.toLowerCase()})`,tip:'% de medições entregues ao cliente dentro da regra de prazo, no mês de referência.',val:pc===null?'—':pc+'<small>%</small>',cls:clsP(pc),meta:cc.np+' no prazo · '+cc.at+' atraso',delta:deltaHtml('cli',list)},
+    {key:'fin',ic:'dollar',ick:'a',lab:`No prazo — Financeiro (${CURNAME.toLowerCase()})`,tip:'% de medições liberadas ao financeiro dentro da regra, no mês de referência.',val:pf===null?'—':pf+'<small>%</small>',cls:clsP(pf),meta:fc.np+' no prazo · '+fc.at+' atraso',delta:deltaHtml('fin',list)},
+    {key:'atrasos',ic:'clock',ick:'r',lab:'Atrasos no mês',tip:'Entregas após a data-regra no mês (cliente + financeiro).',val:delays,cls:delays?'bad':'good',meta:'cliente + financeiro'},
+    {key:'pend',ic:'clip',ick:'y',lab:'Pendências no mês',tip:'Itens ainda a enviar ou em andamento no mês (medição ou faturamento).',val:pend,cls:pend?'warn':'good',meta:'a enviar / em andamento'},
+  ];
+  document.getElementById('kpis').innerHTML=K.map(k=>
+    `<div class="kpi clickable${k.key==='total'?' accent':''}" data-kpi="${k.key}" tabindex="0" role="button">
+      <div class="khead"><div class="lab">${k.lab} ${info(k.tip)}</div><div class="kic ${k.ick}"><svg class="ic" viewBox="0 0 24 24">${ICO[k.ic]}</svg></div></div>
+      <div class="val ${k.cls||''}">${k.val}</div>
+      <div class="krow"><span class="meta">${k.meta}</span>${k.delta?k.delta+'<span class="meta">vs '+(PREVNAME||'').toLowerCase()+'/26</span>':''}</div>
+      <span class="drill">Ver detalhamento →</span>
+    </div>`).join('');
+}
+
+/* ============ trend chart ============ */
+function renderChart(){
+  const list=globalFilter();
+  const past=MONTHS.filter(m=>m.idx<=CUR);
+  const ser=which=>past.map(mo=>{const c=stageCounts(list,which,mo.name);return pct(c.np,c.at);});
+  const sc=ser('cli'), sf=ser('fin');
+  const W=560,H=220,PL=32,PR=16,PT=16,PB=28, iw=W-PL-PR, ih=H-PT-PB;
+  const x=i=>PL+(past.length<2?iw/2:i*iw/(past.length-1)), y=v=>PT+ih-(v/100)*ih;
+  const path=s=>{let d='',st=false;s.forEach((v,i)=>{if(v==null)return;d+=(st?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' ';st=true;});return d.trim();};
+  const dots=(s,col)=>s.map((v,i)=>v==null?'':`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.4" fill="#fff" stroke="${col}" stroke-width="1.8"/><text x="${x(i).toFixed(1)}" y="${(y(v)-9).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${col}">${v}</text>`).join('');
+  let grid='';[0,25,50,75,100].forEach(g=>{grid+=`<line x1="${PL}" x2="${W-PR}" y1="${y(g)}" y2="${y(g)}" stroke="#eef1f3"/><text x="${PL-7}" y="${y(g)+3}" text-anchor="end" font-size="9.5" fill="#8a94a0">${g}%</text>`;});
+  const xl=past.map((mo,i)=>`<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="#55606d">${mo.name}</text>`).join('');
+  document.getElementById('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">${grid}
+    <path d="${path(sf)}" fill="none" stroke="var(--fin)" stroke-width="2" stroke-dasharray="5 3.5"/>
+    <path d="${path(sc)}" fill="none" stroke="var(--brand)" stroke-width="2.2"/>
+    ${dots(sf,'#e08a12')}${dots(sc,'#1f9d5a')}${xl}</svg>`;
+}
+
+/* ============ donut (pendências) ============ */
+function renderDonut(){
+  const list=globalFilter();
+  let ac=0,af=0,fp=0;
+  list.forEach(c=>{const m=c.m[CURNAME];
+    if(m.cs==='em_andamento')ac++;
+    if(m.fs==='em_andamento')af++;
+    if(m.fs==='pendente')fp++;});
+  const segs=[{lab:'Aguardando cliente',val:ac,col:'var(--brand)',hex:'#1f9d5a'},
+              {lab:'Aguardando financeiro',val:af,col:'var(--fin)',hex:'#e08a12'},
+              {lab:'Faturamento pendente',val:fp,col:'var(--at)',hex:'#d84a44'}].filter(s=>s.val>0);
+  const total=segs.reduce((a,s)=>a+s.val,0);
+  const r=52,cx=64,cy=64,C=2*Math.PI*r; let off=0;
+  let circles=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eef1f3" stroke-width="16"/>`;
+  segs.forEach(s=>{const len=total?s.val/total*C:0;
+    circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.hex}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    off+=len;});
+  document.getElementById('donut').innerHTML=`<svg width="128" height="128" viewBox="0 0 128 128">${circles}
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="26" font-weight="700" font-family="var(--display)" fill="var(--ink)">${total}</text>
+    <text x="${cx}" y="${cy+13}" text-anchor="middle" font-size="9.5" fill="#8a94a0">no mês</text></svg>`;
+  document.getElementById('donutLegend').innerHTML = total? segs.map(s=>
+    `<span class="k"><span class="dot" style="background:${s.hex}"></span><span>${s.lab}</span><span class="n">${s.val}</span><span class="pc">${Math.round(s.val/total*100)}%</span></span>`).join('')
+    : '<span class="pc" style="color:var(--ink-3)">Sem pendências no recorte atual.</span>';
+}
+
+/* ============ heatmap ============ */
+function heatColor(t){ // 0..1 -> light→green→amber→red
+  const stops=[[0,[233,240,236]],[0.15,[122,199,127]],[0.5,[230,195,77]],[1,[216,74,68]]];
+  for(let i=1;i<stops.length;i++){ if(t<=stops[i][0]){const[a,ca]=stops[i-1],[b,cb]=stops[i];const f=(t-a)/(b-a||1);
+    return `rgb(${ca.map((v,j)=>Math.round(v+(cb[j]-v)*f)).join(',')})`;}}
+  return 'rgb(216,74,68)';
+}
+function renderHeat(){
+  const list=globalFilter(); const past=MONTHS.filter(m=>m.idx<=CUR);
+  const vals=past.map(mo=>{let a=0;list.forEach(c=>{if(c.m[mo.name].cs==='atraso')a++;if(c.m[mo.name].fs==='atraso')a++;});return a;});
+  const max=Math.max(1,...vals);
+  document.getElementById('heat').innerHTML=past.map((mo,i)=>{
+    const t=vals[i]/max, col=heatColor(t), txt=t>0.42?'#fff':'#3a4753';
+    return `<div><div class="hm">${mo.name}</div><div class="hb" style="background:${col};color:${txt}">${vals[i]||''}</div></div>`;
+  }).join('');
+}
+
+/* ============ ranking ============ */
+function renderRank(){
+  const list=globalFilter().map(c=>({c,d:totalDelays(c)})).filter(o=>o.d>0).sort((a,b)=>b.d-a.d).slice(0,8);
+  const el=document.getElementById('rank');
+  if(!list.length){el.innerHTML='<li class="empty">Nenhum atraso no recorte atual.</li>';return;}
+  const max=list[0].d;
+  el.innerHTML=list.map((o,i)=>{const dc=delaysOf(o.c,'cli'),df=delaysOf(o.c,'fin');
+    return `<li data-ci="${DATA.contracts.indexOf(o.c)}"><span class="pos">${i+1}</span>
+      <span class="rn"><b>${o.c.name}</b><span>${o.c.unit} · cliente ${dc} · financeiro ${df}</span></span>
+      <span class="bars"><span class="barwrap"><span class="bar" style="width:${o.d/max*100}%"></span></span><span class="rc">${o.d}</span></span></li>`;
+  }).join('');
+}
+
+/* ============ matrix ============ */
+function boxHtml(c,mn){
+  const st=statusOf(c,mn), dt=dateOf(c,mn), cls=(STLAB[st]||['na'])[0];
+  let txt='', ok='';
+  if(dt) txt=fmtDate(dt).split('/')[0];
+  else if(st==='no_prazo') ok=' ok';
+  else if(st==='pendente'||st==='em_andamento') txt='·';
+  else if(st==='futuro'||st==='nao_aplicavel'||st==='nao_iniciado') txt='—';
+  const jp=c.m[mn].jp?'<span class="jp"></span>':'';
+  return `<td class="cell"><div class="box ${cls}${ok}" data-c="${DATA.contracts.indexOf(c)}" data-m="${mn}">${txt}${jp}</div></td>`;
+}
+function rowHtml(c,tag){
+  const cells=MONTHS.map(mo=>boxHtml(c,mo.name)).join('');
+  const t=tag?`<span class="cn-tag">${c.unit.replace('FILIAL ','').slice(0,3)}</span>`:'';
+  return `<tr class="crow"><td class="c-name" data-ci="${DATA.contracts.indexOf(c)}"><div class="cn-row">${t}<span class="cn-name" title="${c.full.replace(/"/g,'&quot;')}">${c.name}</span><span class="cn-rule">${ruleOf(c)||'—'}</span></div></td>${cells}</tr>`;
+}
+function renderMatrix(){
+  document.getElementById('matrixTitle').textContent='Matriz de status — '+(stage==='cli'?'Cliente':'Financeiro');
+  const t=document.getElementById('matrix');
+  const head='<thead><tr><th class="c-name">Contrato · regra</th>'+MONTHS.map(m=>`<th class="${m.future?'future':''}">${m.name}</th>`).join('')+'</tr></thead>';
+  const list=matrixFilter();
+  let jpTotal=0; DATA.contracts.forEach(c=>MONTHS.forEach(mo=>{if(c.m[mo.name].jp)jpTotal++;}));
+  document.getElementById('matrixCount').innerHTML=
+    (jpTotal?`<span class="jpchip" id="jpChip"><span class="d"></span>${jpTotal} justificativa${jpTotal>1?'s':''} pendente${jpTotal>1?'s':''}</span> `:'')
+    +`<span class="updated">${list.length} de ${DATA.contracts.length} contratos</span>`;
+  let body='<tbody>';
+  const grouped = !state.status && !state.onlyLate;
+  if(grouped){
+    [...new Set(DATA.contracts.map(c=>c.unit))].forEach(u=>{const rows=list.filter(c=>c.unit===u);
+      if(!rows.length)return;
+      body+=`<tr class="unit-row"><td colspan="${MONTHS.length+1}">${u} · ${rows.length}</td></tr>`;
+      rows.forEach(c=>body+=rowHtml(c,false));});
+  }else{
+    [...list].sort((a,b)=>totalDelays(b)-totalDelays(a)||a.name.localeCompare(b.name,'pt')).forEach(c=>body+=rowHtml(c,true));
+  }
+  if(!list.length) body+=`<tr><td class="c-name" style="color:var(--ink-3);padding:16px">Nenhum contrato neste recorte.</td>${MONTHS.map(()=>'<td></td>').join('')}</tr>`;
+  t.innerHTML=head+body+'</tbody>';
+  bindCells();
+}
+
+/* ============ tooltip ============ */
+const tt=document.getElementById('tt');
+function bindCells(){
+  document.querySelectorAll('.box[data-c]').forEach(b=>{
+    b.addEventListener('mousemove',e=>{
+      const c=DATA.contracts[+b.dataset.c], mn=b.dataset.m, st=statusOf(c,mn), dt=dateOf(c,mn);
+      const [cls,lab]=STLAB[st]||['na','—'], stc={op:'st-op',at:'st-at',pe:'st-pe',em:'st-em'}[cls]||'';
+      let h=`<b>${c.name}</b><div class="row">${MFULL[mn]} · ${stage==='cli'?'Cliente':'Financeiro'}</div><div class="${stc}">${lab}</div>`;
+      if(dt) h+=`<div class="row">Entregue: <span class="dt">${fmtDate(dt)}</span> · Regra: ${ruleOf(c)||'—'}</div>`;
+      else if(['atraso','no_prazo','pendente'].includes(st)) h+=`<div class="row">Regra: ${ruleOf(c)||'—'}</div>`;
+      const ob=c.m[mn].obs; if(ob) h+=`<div class="row" style="margin-top:4px">“${ob}”</div>`;
+      if(c.m[mn].jp) h+=`<div class="st-pe" style="margin-top:4px">⚠ Justificativa pendente</div>`;
+      tt.innerHTML=h; tt.style.display='block'; tt.style.opacity='1';
+      let x=e.clientX+14,yy=e.clientY+14;
+      if(x+tt.offsetWidth>innerWidth)x=e.clientX-tt.offsetWidth-14;
+      if(yy+tt.offsetHeight>innerHeight)yy=e.clientY-tt.offsetHeight-14;
+      tt.style.left=x+'px'; tt.style.top=yy+'px';
+    });
+    b.addEventListener('mouseleave',()=>{tt.style.opacity='0';tt.style.display='none';});
+  });
+}
+
+/* ============ modal / detail ============ */
+const modal=document.getElementById('modal');
+const pill=st=>{const[c,l]=STLAB[st]||['na','—'];return `<span class="pill p-${c}"><span class="d"></span>${l}</span>`;};
+function openModal(title,sub,html){document.getElementById('mTitle').innerHTML=title;document.getElementById('mSub').textContent=sub||'';
+  document.getElementById('mBody').innerHTML=html;modal.hidden=false;document.body.style.overflow='hidden';document.getElementById('mBody').scrollTop=0;}
+function closeModal(){modal.hidden=true;document.body.style.overflow='';}
+
+function contractDetailHtml(idx){
+  const c=DATA.contracts[idx], dc=delaysOf(c,'cli'), df=delaysOf(c,'fin');
+  let rows='';
+  MONTHS.forEach(mo=>{const m=c.m[mo.name];
+    const cd=m.cd?` <span class="dt-date">${fmtDate(m.cd)}</span>`:'', fd=m.fd?` <span class="dt-date">${fmtDate(m.fd)}</span>`:'';
+    const ob=m.jp?`<span class="pill p-pe"><span class="d"></span>Justificativa pendente</span>`
+      :(m.obs?`<div class="dt-obs">“${m.obs}”</div>`:'<span style="color:var(--fu)">—</span>');
+    rows+=`<tr><td class="mth">${mo.name}</td><td>${pill(m.cs)}${cd}</td><td>${pill(m.fs)}${fd}</td><td>${ob}</td></tr>`;});
+  return `<div class="dmeta">${c.unit} · Regra cliente: <code>${c.rc||'—'}</code> · Regra financeiro: <code>${c.rf||'—'}</code></div>
+    <div class="dsum"><span class="b"><b class="at">${dc}</b>atrasos cliente</span><span class="b"><b class="at">${df}</b>atrasos financeiro</span><span class="b"><b>${c.active?'Sim':'Não'}</b>ativo no ano</span></div>
+    <table class="dtable"><thead><tr><th>Mês</th><th>Cliente (medição)</th><th>Financeiro (faturamento)</th><th>Observação</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function kpiDetailHtml(key){
+  const list=globalFilter(), mn=CURNAME, mf=cap(MFULL[mn]);
+  const link=c=>`<span class="lnk" data-ci="${DATA.contracts.indexOf(c)}">${c.name}</span>`;
+  const tbl=(h,b)=>`<table class="dtable"><thead><tr>${h}</tr></thead><tbody>${b||'<tr><td colspan="9" style="color:var(--fu);padding:14px">Nenhum contrato neste recorte.</td></tr>'}</tbody></table>`;
+  if(key==='total'){const b=list.map(c=>`<tr><td>${link(c)}</td><td>${c.unit}</td><td>${pill(c.m[mn].cs)}</td><td>${pill(c.m[mn].fs)}</td></tr>`).join('');
+    return{title:'Contratos monitorados',sub:list.length+' contratos · status em '+mf,html:tbl('<th>Contrato</th><th>Unidade</th><th>Cliente</th><th>Financeiro</th>',b)};}
+  if(key==='cli'||key==='fin'){const isC=key==='cli',sg=isC?'cs':'fs',dt=isC?'cd':'fd',rl=isC?'rc':'rf';
+    const rel=list.filter(c=>['no_prazo','atraso'].includes(c.m[mn][sg])).sort((a,b)=>(a.m[mn][sg]==='atraso'?0:1)-(b.m[mn][sg]==='atraso'?0:1));
+    const np=rel.filter(c=>c.m[mn][sg]==='no_prazo').length,at=rel.length-np;
+    const b=rel.map(c=>`<tr><td>${link(c)}</td><td>${c.unit}</td><td>${c.m[mn][dt]?'<span class=dt-date>'+fmtDate(c.m[mn][dt])+'</span>':'<span style=color:var(--fu)>OK</span>'}</td><td><code>${c[rl]||'—'}</code></td><td>${pill(c.m[mn][sg])}</td></tr>`).join('');
+    return{title:'No prazo — '+(isC?'Cliente':'Financeiro'),sub:mf+' · avaliados '+rel.length,
+      html:`<div class="dsum"><span class="b"><b class="op">${np}</b>no prazo</span><span class="b"><b class="at">${at}</b>atraso</span><span class="b"><b>${pct(np,at)===null?'—':pct(np,at)+'%'}</b>no prazo</span></div>`+tbl('<th>Contrato</th><th>Unidade</th><th>Entrega</th><th>Regra</th><th>Status</th>',b)};}
+  if(key==='atrasos'){const it=[];list.forEach(c=>{if(c.m[mn].cs==='atraso')it.push({c,s:'Cliente',dt:c.m[mn].cd,r:c.rc});if(c.m[mn].fs==='atraso')it.push({c,s:'Financeiro',dt:c.m[mn].fd,r:c.rf});});
+    const b=it.map(i=>`<tr><td>${link(i.c)}</td><td>${i.c.unit}</td><td>${i.s}</td><td>${i.dt?'<span class=dt-date>'+fmtDate(i.dt)+'</span>':'—'}</td><td><code>${i.r||'—'}</code></td></tr>`).join('');
+    return{title:'Atrasos no mês',sub:mf+' · '+it.length+' ocorrências (cliente + financeiro)',html:tbl('<th>Contrato</th><th>Unidade</th><th>Etapa</th><th>Entrega</th><th>Regra</th>',b)};}
+  if(key==='pend'){const it=[];list.forEach(c=>['cs','fs'].forEach(k=>{const s=c.m[mn][k];if(s==='pendente'||s==='em_andamento')it.push({c,s:k==='cs'?'Cliente':'Financeiro',st:s});}));
+    const b=it.map(i=>`<tr><td>${link(i.c)}</td><td>${i.c.unit}</td><td>${i.s}</td><td>${pill(i.st)}</td></tr>`).join('');
+    return{title:'Pendências no mês',sub:mf+' · '+it.length+' itens a enviar / em andamento',html:tbl('<th>Contrato</th><th>Unidade</th><th>Etapa</th><th>Situação</th>',b)};}
+}
+function jpDetailHtml(){
+  const items=[];
+  DATA.contracts.forEach(c=>MONTHS.forEach(mo=>{ if(c.m[mo.name].jp)
+    items.push({c,mn:mo.name,cd:c.m[mo.name].cd,fd:c.m[mo.name].fd}); }));
+  const link=c=>`<span class="lnk" data-ci="${DATA.contracts.indexOf(c)}">${c.name}</span>`;
+  const b=items.map(i=>`<tr><td class="mth">${i.mn}</td><td>${link(i.c)}</td><td>${i.c.unit}</td>`+
+    `<td>${i.cd?'<span class=dt-date>'+fmtDate(i.cd)+'</span>':'—'}</td>`+
+    `<td><code>${i.c.rc||'—'}</code></td></tr>`).join('');
+  return{title:'Justificativas pendentes',sub:items.length+' entregas com “INSERIR PQ…” na observação',
+    html:`<div class="dmeta">Entregas fora do prazo em que a observação ainda é um lembrete de preencher, não uma justificativa.</div>`+
+      `<table class="dtable"><thead><tr><th>Mês</th><th>Contrato</th><th>Unidade</th><th>Entrega</th><th>Regra</th></tr></thead><tbody>${b}</tbody></table>`};
+}
+function rankAllHtml(){
+  const list=globalFilter().map(c=>({c,d:totalDelays(c),dc:delaysOf(c,'cli'),df:delaysOf(c,'fin')})).filter(o=>o.d>0).sort((a,b)=>b.d-a.d);
+  const link=c=>`<span class="lnk" data-ci="${DATA.contracts.indexOf(c)}">${c.name}</span>`;
+  const b=list.map((o,i)=>`<tr><td class="mth">${i+1}</td><td>${link(o.c)}</td><td>${o.c.unit}</td><td>${o.dc}</td><td>${o.df}</td><td><b style="color:var(--at)">${o.d}</b></td></tr>`).join('');
+  return{title:'Contratos com mais atrasos',sub:'período jan–jul · '+list.length+' contratos com atraso',
+    html:`<table class="dtable"><thead><tr><th>#</th><th>Contrato</th><th>Unidade</th><th>Cliente</th><th>Financeiro</th><th>Total</th></tr></thead><tbody>${b||'<tr><td colspan=6 style="padding:14px;color:var(--fu)">Sem atrasos.</td></tr>'}</tbody></table>`};
+}
+
+/* ============ export CSV ============ */
+function exportCSV(){
+  const list=matrixFilter(); const sep=';';
+  const head=['Contrato','Unidade','Regra Cliente','Regra Financeiro'];
+  MONTHS.forEach(m=>head.push(m.name+' Cliente',m.name+' Data Cli',m.name+' Financeiro',m.name+' Data Fin'));
+  const lab=s=>(STLAB[s]||['','—'])[1];
+  const esc=v=>{v=(v==null?'':String(v)).replace(/"/g,'""');return /[";\n]/.test(v)?'"'+v+'"':v;};
+  const lines=[head.join(sep)];
+  list.forEach(c=>{const row=[c.name,c.unit,c.rc||'',c.rf||''];
+    MONTHS.forEach(m=>{const x=c.m[m.name];row.push(lab(x.cs),x.cd?fmtDate(x.cd):'',lab(x.fs),x.fd?fmtDate(x.fd):'');});
+    lines.push(row.map(esc).join(sep));});
+  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='medicoes-'+CURNAME.toLowerCase()+'-2026.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ============ events ============ */
+document.addEventListener('click',e=>{
+  const kpi=e.target.closest('[data-kpi]'); if(kpi){const d=kpiDetailHtml(kpi.dataset.kpi);openModal(d.title,d.sub,d.html);return;}
+  const ci=e.target.closest('[data-ci]'); if(ci){const i=+ci.dataset.ci;openModal(DATA.contracts[i].name,DATA.contracts[i].unit,contractDetailHtml(i));return;}
+  if(e.target===modal||e.target.id==='mClose'){closeModal();}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeModal();});
+document.getElementById('kpis').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset.kpi){e.preventDefault();const d=kpiDetailHtml(e.target.dataset.kpi);openModal(d.title,d.sub,d.html);}});
+document.getElementById('rankAll').addEventListener('click',()=>{const d=rankAllHtml();openModal(d.title,d.sub,d.html);});
+document.addEventListener('click',e=>{if(e.target.closest('#jpChip')){const d=jpDetailHtml();openModal(d.title,d.sub,d.html);}});
+document.getElementById('exportBtn').addEventListener('click',exportCSV);
+document.getElementById('refreshBtn').addEventListener('click',function(){
+  document.getElementById('dash').hidden=true;
+  document.getElementById('errState').hidden=true;
+  document.getElementById('loadState').hidden=false;
+  boot();
+});
+
+document.getElementById('stageSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  stage=b.dataset.stage;document.querySelectorAll('#stageSeg button').forEach(x=>x.classList.toggle('on',x===b));renderMatrix();});
+document.getElementById('unitSel').addEventListener('change',e=>{state.unit=e.target.value;renderAll();});
+document.getElementById('statusSel').addEventListener('change',e=>{state.status=e.target.value;renderMatrix();});
+document.getElementById('scopeSel').addEventListener('change',e=>{state.scope=e.target.value;renderMatrix();});
+document.getElementById('onlyLate').addEventListener('change',e=>{state.onlyLate=e.target.checked;renderMatrix();});
+document.getElementById('search').addEventListener('input',e=>{state.q=e.target.value.toLowerCase().trim();renderAll();});
+
+/* sidebar nav */
+document.getElementById('nav').addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;
+  const act=a.dataset.act;
+  document.querySelectorAll('#nav a').forEach(x=>x.classList.toggle('on',x===a));
+  if(act==='top') scrollTo({top:0,behavior:'smooth'});
+  else if(act==='matrix'||act==='contratos') document.getElementById('matrixPanel').scrollIntoView({behavior:'smooth',block:'start'});
+  else if(act==='pend'){const d=kpiDetailHtml('pend');openModal(d.title,d.sub,d.html);}
+  else if(act==='export') exportCSV();
+  else if(act==='config'||act==='ajuda') openHelp();
+});
+document.querySelector('.side-foot').addEventListener('click',e=>{if(e.target.closest('a'))openHelp();});
+
+function openHelp(){
+  openModal('Premissas de classificação','Como “no prazo” e “atraso” são definidos',
+   `<ul style="margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;line-height:1.7">
+    <li>Meses marcados como <code>OK</code> na planilha (jan–mar) = entregues no prazo; não há data exata nesses casos.</li>
+    <li>Com data registrada, compara-se o <b>dia do mês</b> com a regra: <code>ATÉ O DIA N</code> / <code>TODO DIA N</code> → no prazo se dia ≤ N.</li>
+    <li><code>ÚLTIMO DIA DO MÊS</code> → no prazo se dentro do mês. <code>Nº DIA ÚTIL</code> → N-ésimo dia útil (seg–sex, sem feriados).</li>
+    <li>O <b>Financeiro</b> só é avaliado quando a medição ao cliente já foi entregue; a comparação também é por dia do mês.</li>
+    <li>Mês passado sem registro → não aplicável. Mês corrente sem registro → em andamento. Contrato sem entregas no ano → não iniciado.</li>
+    <li><code>-</code> na célula = não se aplica (atendimento encerrado ou sem atendimento no mês). Não entra no cálculo.</li>
+    <li><code>?</code> na célula = dado ainda a inserir; aparece como <b>Dado faltando</b> e não conta como entrega.</li>
+    <li>Observações começando por “INSERIR PQ…” são tratadas como <b>justificativa pendente</b>, não como justificativa.</li>
+    <li>Os prazos vêm sempre da coluna B (cliente) e da coluna C (financeiro) da aba CALENDÁRIO; a aba PROGRAMAÇÃO é ignorada.</li>
+    <li>O comparativo “vs mês anterior” usa o % no prazo de ${PREVNAME?MFULL[PREVNAME]:'—'}.</li>
+   </ul>`);
+}
+
+function renderAll(){renderKpis();renderChart();renderDonut();renderHeat();renderRank();renderMatrix();}
+boot();
+</script>
+</body>
+</html>
