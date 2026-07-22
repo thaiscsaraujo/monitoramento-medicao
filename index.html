@@ -26,6 +26,7 @@
   --display:'Bricolage Grotesque','Plus Jakarta Sans',system-ui,sans-serif;
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html,body{margin:0}
 body{background:var(--bg); color:var(--ink); font-family:'Plus Jakarta Sans',system-ui,sans-serif;
   font-size:13px; line-height:1.45; -webkit-font-smoothing:antialiased; font-feature-settings:'tnum' 1}
@@ -286,9 +287,7 @@ table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
     <nav class="nav" id="nav">
       <a data-act="top" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg>Resumo</a>
       <a data-act="matrix"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Matriz</a>
-      <a data-act="contratos"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h7M9 17h7"/></svg>Contratos</a>
       <a data-act="pend"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Pendências</a>
-      <a data-act="export"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h9l3 3v13H4z" transform="translate(2 0)"/><path d="M9 12h6M12 9v6"/></svg>Relatórios</a>
       <a data-act="config"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 2h-4.4l-.4 2.4a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-.9c.6.5 1.3.9 2 1.2l.4 2.4h4.4l.4-2.4c.7-.3 1.4-.7 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></svg>Configurações</a>
     </nav>
     <div class="side-foot">
@@ -310,7 +309,6 @@ table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
             <span class="src" id="genAt"></span></div>
         </div>
         <button class="btn" id="refreshBtn" title="Reler a planilha"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>Atualizar</button>
-        <button class="btn" id="exportBtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v3h16v-3"/></svg>Exportar</button>
       </div>
     </div>
 
@@ -557,7 +555,8 @@ function cellKind(v, year) {
   if (s === '-' || s === '--' || s === '–') return { kind: 'na' };
   if (s === '?' || s === '??') return { kind: 'missing' };
   if (s.toUpperCase() === 'OK') return { kind: 'ok' };
-  var m = s.match(/^(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(\d{2,4}))?$/);
+  var sn = s.replace(/\/{2,}/g, '/');   // tolera erro de digitação tipo "14//07"
+  var m = sn.match(/^(\d{1,2})\s*\/\s*(\d{1,2})(?:\s*\/\s*(\d{2,4}))?$/);
   if (m) {
     var yy = m[3] ? (m[3].length === 2 ? 2000 + (+m[3]) : +m[3]) : year;
     return { kind: 'date', date: new Date(yy, (+m[2]) - 1, +m[1]) };
@@ -881,13 +880,23 @@ function renderChart(){
   const W=560,H=220,PL=32,PR=16,PT=16,PB=28, iw=W-PL-PR, ih=H-PT-PB;
   const x=i=>PL+(past.length<2?iw/2:i*iw/(past.length-1)), y=v=>PT+ih-(v/100)*ih;
   const path=s=>{let d='',st=false;s.forEach((v,i)=>{if(v==null)return;d+=(st?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' ';st=true;});return d.trim();};
-  const dots=(s,col)=>s.map((v,i)=>v==null?'':`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.4" fill="#fff" stroke="${col}" stroke-width="1.8"/><text x="${x(i).toFixed(1)}" y="${(y(v)-9).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${col}">${v}</text>`).join('');
+  const dots=(s,col)=>s.map((v,i)=>v==null?'':`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.4" fill="#fff" stroke="${col}" stroke-width="1.8"/>`).join('');
+  // rótulos: quando os dois valores ficam próximos, um vai acima e o outro abaixo
+  const lab=(X,Y,v,col)=>`<text x="${X.toFixed(1)}" y="${Y.toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${col}" stroke="#fff" stroke-width="3" paint-order="stroke" stroke-linejoin="round">${v}</text>`;
+  let labels='';
+  past.forEach((mo,i)=>{
+    const a=sc[i], b=sf[i];
+    let dyA=-10, dyB=-10;
+    if(a!=null && b!=null && Math.abs(a-b)<9){ if(a>=b){dyA=-10; dyB=18;} else {dyA=18; dyB=-10;} }
+    if(b!=null) labels+=lab(x(i), y(b)+dyB, b, '#e08a12');
+    if(a!=null) labels+=lab(x(i), y(a)+dyA, a, '#1f9d5a');
+  });
   let grid='';[0,25,50,75,100].forEach(g=>{grid+=`<line x1="${PL}" x2="${W-PR}" y1="${y(g)}" y2="${y(g)}" stroke="#eef1f3"/><text x="${PL-7}" y="${y(g)+3}" text-anchor="end" font-size="9.5" fill="#8a94a0">${g}%</text>`;});
   const xl=past.map((mo,i)=>`<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="#55606d">${mo.name}</text>`).join('');
   document.getElementById('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">${grid}
     <path d="${path(sf)}" fill="none" stroke="var(--fin)" stroke-width="2" stroke-dasharray="5 3.5"/>
     <path d="${path(sc)}" fill="none" stroke="var(--brand)" stroke-width="2.2"/>
-    ${dots(sf,'#e08a12')}${dots(sc,'#1f9d5a')}${xl}</svg>`;
+    ${dots(sf,'#e08a12')}${dots(sc,'#1f9d5a')}${labels}${xl}</svg>`;
 }
 
 /* ============ donut (pendências) ============ */
@@ -1065,21 +1074,6 @@ function rankAllHtml(){
     html:`<table class="dtable"><thead><tr><th>#</th><th>Contrato</th><th>Unidade</th><th>Cliente</th><th>Financeiro</th><th>Total</th></tr></thead><tbody>${b||'<tr><td colspan=6 style="padding:14px;color:var(--fu)">Sem atrasos.</td></tr>'}</tbody></table>`};
 }
 
-/* ============ export CSV ============ */
-function exportCSV(){
-  const list=matrixFilter(); const sep=';';
-  const head=['Contrato','Unidade','Regra Cliente','Regra Financeiro'];
-  MONTHS.forEach(m=>head.push(m.name+' Cliente',m.name+' Data Cli',m.name+' Financeiro',m.name+' Data Fin'));
-  const lab=s=>(STLAB[s]||['','—'])[1];
-  const esc=v=>{v=(v==null?'':String(v)).replace(/"/g,'""');return /[";\n]/.test(v)?'"'+v+'"':v;};
-  const lines=[head.join(sep)];
-  list.forEach(c=>{const row=[c.name,c.unit,c.rc||'',c.rf||''];
-    MONTHS.forEach(m=>{const x=c.m[m.name];row.push(lab(x.cs),x.cd?fmtDate(x.cd):'',lab(x.fs),x.fd?fmtDate(x.fd):'');});
-    lines.push(row.map(esc).join(sep));});
-  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='medicoes-'+CURNAME.toLowerCase()+'-2026.csv';a.click();URL.revokeObjectURL(a.href);
-}
 
 /* ============ events ============ */
 document.addEventListener('click',e=>{
@@ -1091,7 +1085,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)close
 document.getElementById('kpis').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset.kpi){e.preventDefault();const d=kpiDetailHtml(e.target.dataset.kpi);openModal(d.title,d.sub,d.html);}});
 document.getElementById('rankAll').addEventListener('click',()=>{const d=rankAllHtml();openModal(d.title,d.sub,d.html);});
 document.addEventListener('click',e=>{if(e.target.closest('#jpChip')){const d=jpDetailHtml();openModal(d.title,d.sub,d.html);}});
-document.getElementById('exportBtn').addEventListener('click',exportCSV);
 document.getElementById('refreshBtn').addEventListener('click',function(){
   document.getElementById('dash').hidden=true;
   document.getElementById('errState').hidden=true;
@@ -1114,7 +1107,6 @@ document.getElementById('nav').addEventListener('click',e=>{const a=e.target.clo
   if(act==='top') scrollTo({top:0,behavior:'smooth'});
   else if(act==='matrix'||act==='contratos') document.getElementById('matrixPanel').scrollIntoView({behavior:'smooth',block:'start'});
   else if(act==='pend'){const d=kpiDetailHtml('pend');openModal(d.title,d.sub,d.html);}
-  else if(act==='export') exportCSV();
   else if(act==='config'||act==='ajuda') openHelp();
 });
 document.querySelector('.side-foot').addEventListener('click',e=>{if(e.target.closest('a'))openHelp();});
