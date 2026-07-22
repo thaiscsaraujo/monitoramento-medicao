@@ -274,6 +274,17 @@ table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
 .mlegend .chip.na{background:#f2f4f6;border:1px solid var(--line-strong)}
 .mlegend .chip.fu{background:#f2f4f6;border:1px solid var(--line)}
 .mlegend .jpdot{width:9px;height:9px;border-radius:50%;background:var(--pe);flex:none}
+
+.box.op.lim{box-shadow:inset 0 0 0 1.6px rgba(31,157,90,.55)}
+.mlegend .chip.op.lim{box-shadow:inset 0 0 0 1.6px rgba(31,157,90,.55)}
+.limchip{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:#1a7a48;background:var(--op-bg);
+  border:1px solid rgba(31,157,90,.3);border-radius:20px;padding:4px 12px;cursor:pointer}
+.limchip:hover{border-color:var(--op)}
+.limchip .d{width:7px;height:7px;border-radius:50%;background:var(--op)}
+.mg{font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:20px;margin-left:2px}
+.mg.pos{background:var(--op-bg);color:var(--op)}
+.mg.neg{background:var(--at-bg);color:var(--at)}
+.mg.lim{background:var(--pe-bg);color:var(--pe)}
 .foot{margin-top:22px; font-size:11px; color:var(--ink-3)}
 </style>
 </head>
@@ -367,7 +378,7 @@ table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
         <div class="fgroup"><label>Status</label><select id="statusSel">
           <option value="">Todos</option><option value="no_prazo">No prazo</option><option value="atraso">Atraso</option>
           <option value="pendente">Pendente</option><option value="em_andamento">Em andamento</option>
-          <option value="dado_faltando">Dado faltando</option><option value="nao_aplicavel">Não aplicável</option><option value="futuro">Futuro</option><option value="__jp">Justificativa pendente</option></select></div>
+          <option value="dado_faltando">Dado faltando</option><option value="nao_aplicavel">Não aplicável</option><option value="futuro">Futuro</option><option value="__lim">Entregue no limite</option><option value="__jp">Justificativa pendente</option></select></div>
         <div class="fgroup"><label>Contratos</label><select id="scopeSel">
           <option value="">Todos os contratos</option><option value="ativos">Somente ativos</option><option value="inativos">Não iniciados</option></select></div>
         <label class="toggle"><input type="checkbox" id="onlyLate"><span class="tr"></span>Apenas atrasados</label>
@@ -383,6 +394,7 @@ table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
         <span class="k"><span class="chip df"></span> Dado faltando <span class="lg">“?” na planilha</span></span>
         <span class="k"><span class="chip na"></span> Não aplicável <span class="lg">“-” ou sem medição</span></span>
         <span class="k"><span class="chip fu"></span> Futuro</span>
+        <span class="k"><span class="chip op lim"></span> No limite <span class="lg">sem folga</span></span>
         <span class="k"><span class="jpdot"></span> Justificativa pendente</span>
         <span class="k lg">O número na célula é o dia da entrega.</span>
       </div>
@@ -517,17 +529,65 @@ function parseRule(txt) {
   return { kind: 'none', raw: raw };
 }
 
-/** N-ésimo dia útil (seg–sex). Feriados não são considerados. */
+/* ── Feriados nacionais: fixos + móveis (Páscoa pelo algoritmo de Meeus) ── */
+function easterSunday(y){
+  var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,
+      f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,
+      i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+      mo=Math.floor((h+l-7*m+114)/31), da=((h+l-7*m+114)%31)+1;
+  return new Date(y, mo-1, da);
+}
+var _holCache = {};
+function holidaySet(y){
+  if (_holCache[y]) return _holCache[y];
+  var E = easterSunday(y), S = {};
+  function add(d){ S[isoDate(d)] = true; }
+  function off(n){ var x = new Date(E); x.setDate(x.getDate()+n); return x; }
+  // fixos: 01/01, 21/04, 01/05, 07/09, 12/10, 02/11, 15/11, 20/11, 25/12
+  [[0,1],[3,21],[4,1],[8,7],[9,12],[10,2],[10,15],[10,20],[11,25]]
+    .forEach(function(p){ add(new Date(y, p[0], p[1])); });
+  add(off(-48)); add(off(-47));   // Carnaval (segunda e terça)
+  add(off(-2));                   // Sexta-feira Santa
+  add(off(60));                   // Corpus Christi
+  _holCache[y] = S;
+  return S;
+}
+function isoDate(d){
+  function p(n){ return (n<10?'0':'')+n; }
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+function isBusinessDay(d){
+  var w = d.getDay();
+  if (w === 0 || w === 6) return false;
+  return !holidaySet(d.getFullYear())[isoDate(d)];
+}
+/** Empurra para o próximo dia útil (fim de semana ou feriado). */
+function rollForward(d){
+  var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  while (!isBusinessDay(x)) x.setDate(x.getDate()+1);
+  return x;
+}
+/** N-ésimo dia útil do mês, já descontando feriados. */
 function nthBusinessDay(year, month, n) {
   var d = new Date(year, month - 1, 1), count = 0;
   while (d.getMonth() === month - 1) {
-    var wd = d.getDay();
-    if (wd !== 0 && wd !== 6) {
+    if (isBusinessDay(d)) {
       count++;
-      if (count === n) return new Date(d.getTime());
+      if (count === n) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
     }
     d.setDate(d.getDate() + 1);
   }
+  return null;
+}
+/** Data-limite de entrega para o mês do bloco. null = regra não interpretável. */
+function deadlineFor(rule, year, monthIdx){
+  if (!rule) return null;
+  if (rule.kind === 'day'){
+    var last = new Date(year, monthIdx, 0).getDate();
+    return rollForward(new Date(year, monthIdx-1, Math.min(rule.day, last)));
+  }
+  if (rule.kind === 'ultimo') return new Date(year, monthIdx, 0);
+  if (rule.kind === 'util')   return nthBusinessDay(year, monthIdx, rule.n);
   return null;
 }
 
@@ -564,18 +624,17 @@ function cellKind(v, year) {
   return { kind: 'text', text: s };
 }
 
-/** true = no prazo, false = atraso, null = não avaliável. */
-function withinRule(date, rule, year, monthIdx) {
-  if (!rule) return null;
-  if (rule.kind === 'day') return date.getDate() <= rule.day;
-  if (rule.kind === 'ultimo') return true;
-  if (rule.kind === 'util') {
-    var limit = nthBusinessDay(year, monthIdx, rule.n);
-    if (!limit) return null;
-    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return d.getTime() <= limit.getTime();
-  }
-  return null;
+/**
+ * Compara a DATA COMPLETA da entrega com a data-limite do mês do bloco.
+ * Retorna {days, deadline}: days < 0 = antecedência, 0 = no limite, > 0 = atraso.
+ * null quando a regra não é interpretável.
+ */
+function evaluate(date, rule, year, monthIdx){
+  var dl = deadlineFor(rule, year, monthIdx);
+  if (!dl) return null;
+  var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  var days = Math.round((d.getTime() - dl.getTime()) / 86400000);
+  return { days: days, deadline: isoDate(dl) };
 }
 
 /** Observação que é lembrete de preencher, não justificativa. */
@@ -655,6 +714,7 @@ function buildData(grid, curMonth) {
       var cli = m._cli, fin = m._fin;
       var future = b.idx > curMonth, current = b.idx === curMonth;
       var cs, fs;
+      var cliDays = null, finDays = null, cliDl = null, finDl = null;
 
       /* ---- etapa CLIENTE ---- */
       if (cli.kind === 'na') cs = 'nao_aplicavel';
@@ -663,8 +723,9 @@ function buildData(grid, curMonth) {
       else if (cli.kind === 'ok') cs = 'no_prazo';
       else if (cli.kind === 'missing') cs = 'dado_faltando';
       else if (cli.kind === 'date') {
-        var okc = withinRule(cli.date, rc, year, b.idx);
-        cs = okc === null ? 'entregue' : (okc ? 'no_prazo' : 'atraso');
+        var evc = evaluate(cli.date, rc, year, b.idx);
+        if (!evc) cs = 'entregue';
+        else { cs = evc.days > 0 ? 'atraso' : 'no_prazo'; cliDays = evc.days; cliDl = evc.deadline; }
       }
       else if (cli.kind === 'text') cs = 'entregue';
       else cs = current ? 'em_andamento' : 'nao_aplicavel';
@@ -678,8 +739,9 @@ function buildData(grid, curMonth) {
       else if (fin.kind === 'ok') fs = 'no_prazo';
       else if (fin.kind === 'missing') fs = 'dado_faltando';
       else if (fin.kind === 'date') {
-        var okf = withinRule(fin.date, rf, year, b.idx);
-        fs = okf === null ? 'entregue' : (okf ? 'no_prazo' : 'atraso');
+        var evf = evaluate(fin.date, rf, year, b.idx);
+        if (!evf) fs = 'entregue';
+        else { fs = evf.days > 0 ? 'atraso' : 'no_prazo'; finDays = evf.days; finDl = evf.deadline; }
       }
       else if (fin.kind === 'text') fs = 'entregue';
       else fs = current ? 'em_andamento' : 'pendente';
@@ -694,6 +756,8 @@ function buildData(grid, curMonth) {
         cs: cs, fs: fs,
         cd: cli.kind === 'date' ? iso(cli.date) : null,
         fd: fin.kind === 'date' ? iso(fin.date) : null,
+        cdd: cliDays, fdd: finDays,     // dias: negativo = antecedência, 0 = no limite
+        cdl: cliDl,  fdl: finDl,        // data-limite aplicada
         obs: jp ? null : m.obs,
         jp: jp,
         chk: m.chk
@@ -801,6 +865,19 @@ usel=document.getElementById('unitSel');
 
 /* ============ helpers ============ */
 const fmtDate=iso=>{ if(!iso)return ''; const[y,m,d]=iso.split('-'); return d+'/'+m; };
+const ddOf=(c,mn)=> stage==='cli'?c.m[mn].cdd:c.m[mn].fdd;
+const dlOf=(c,mn)=> stage==='cli'?c.m[mn].cdl:c.m[mn].fdl;
+function marginText(dd){
+  if(dd==null) return '';
+  if(dd>0)  return dd+' dia'+(dd>1?'s':'')+' de atraso';
+  if(dd===0) return 'entregue no último dia do prazo';
+  const a=Math.abs(dd); return a+' dia'+(a>1?'s':'')+' de antecedência';
+}
+function allMargins(list,which){
+  const out=[]; list.forEach(c=>MONTHS.forEach(mo=>{
+    const v=which==='cli'?c.m[mo.name].cdd:c.m[mo.name].fdd;
+    if(v!=null&&v<=0) out.push(v); })); return out;
+}
 const statusOf=(c,mn)=> stage==='cli'?c.m[mn].cs:c.m[mn].fs;
 const dateOf=(c,mn)=> stage==='cli'?c.m[mn].cd:c.m[mn].fd;
 const ruleOf=c=> stage==='cli'?c.rc:c.rf;
@@ -821,6 +898,7 @@ function matrixFilter(){
     if(state.scope==='inativos'&&c.active) return false;
     if(state.onlyLate&&totalDelays(c)===0) return false;
     if(state.status==='__jp'){ if(!MONTHS.some(mo=>c.m[mo.name].jp)) return false; }
+    else if(state.status==='__lim'){ if(!MONTHS.some(mo=>c.m[mo.name].cdd===0||c.m[mo.name].fdd===0)) return false; }
     else if(state.status){ const s=stage==='cli'?c.m[CURNAME].cs:c.m[CURNAME].fs; if(s!==state.status) return false; }
     return true;
   });
@@ -846,6 +924,11 @@ const ICO={
   dollar:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.5 9.2A2.4 2.4 0 0 0 12 8c-1.5 0-2.5.8-2.5 2s1 1.8 2.5 2 2.5.9 2.5 2-1 2-2.5 2a2.4 2.4 0 0 1-2.5-1.2"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/>',
   clip:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 11h6M9 15h4"/>'};
+function folga(list,which){
+  const m=allMargins(list,which); if(!m.length) return '';
+  const avg=m.reduce((a,b)=>a+b,0)/m.length;
+  return ' · folga média '+Math.abs(avg).toFixed(1).replace('.',',')+'d';
+}
 function renderKpis(){
   const list=globalFilter();
   const active=list.filter(c=>c.active).length;
@@ -857,8 +940,8 @@ function renderKpis(){
   const info=t=>`<svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/><title>${t}</title></svg>`;
   const K=[
     {key:'total',ic:'doc',ick:'g',lab:'Contratos monitorados',tip:'Total de contratos no calendário (todas as unidades, salvo filtro).',val:list.length,meta:active+' ativos no ano'},
-    {key:'cli',ic:'users',ick:'g',lab:`No prazo — Cliente (${CURNAME.toLowerCase()})`,tip:'% de medições entregues ao cliente dentro da regra de prazo, no mês de referência.',val:pc===null?'—':pc+'<small>%</small>',cls:clsP(pc),meta:cc.np+' no prazo · '+cc.at+' atraso',delta:deltaHtml('cli',list)},
-    {key:'fin',ic:'dollar',ick:'a',lab:`No prazo — Financeiro (${CURNAME.toLowerCase()})`,tip:'% de medições liberadas ao financeiro dentro da regra, no mês de referência.',val:pf===null?'—':pf+'<small>%</small>',cls:clsP(pf),meta:fc.np+' no prazo · '+fc.at+' atraso',delta:deltaHtml('fin',list)},
+    {key:'cli',ic:'users',ick:'g',lab:`No prazo — Cliente (${CURNAME.toLowerCase()})`,tip:'% de medições entregues ao cliente dentro da regra de prazo, no mês de referência.',val:pc===null?'—':pc+'<small>%</small>',cls:clsP(pc),meta:cc.np+' no prazo · '+cc.at+' atraso'+folga(list,'cli'),delta:deltaHtml('cli',list)},
+    {key:'fin',ic:'dollar',ick:'a',lab:`No prazo — Financeiro (${CURNAME.toLowerCase()})`,tip:'% de medições liberadas ao financeiro dentro da regra, no mês de referência.',val:pf===null?'—':pf+'<small>%</small>',cls:clsP(pf),meta:fc.np+' no prazo · '+fc.at+' atraso'+folga(list,'fin'),delta:deltaHtml('fin',list)},
     {key:'atrasos',ic:'clock',ick:'r',lab:'Atrasos no mês',tip:'Entregas após a data-regra no mês (cliente + financeiro).',val:delays,cls:delays?'bad':'good',meta:'cliente + financeiro'},
     {key:'pend',ic:'clip',ick:'y',lab:'Pendências no mês',tip:'Itens ainda a enviar ou em andamento no mês (medição ou faturamento).',val:pend,cls:pend?'warn':'good',meta:'a enviar / em andamento'},
   ];
@@ -963,7 +1046,8 @@ function boxHtml(c,mn){
   else if(st==='pendente'||st==='em_andamento') txt='·';
   else if(st==='futuro'||st==='nao_aplicavel'||st==='nao_iniciado') txt='—';
   const jp=c.m[mn].jp?'<span class="jp"></span>':'';
-  return `<td class="cell"><div class="box ${cls}${ok}" data-c="${DATA.contracts.indexOf(c)}" data-m="${mn}">${txt}${jp}</div></td>`;
+  const lim=(st==='no_prazo'&&ddOf(c,mn)===0)?' lim':'';
+  return `<td class="cell"><div class="box ${cls}${ok}${lim}" data-c="${DATA.contracts.indexOf(c)}" data-m="${mn}">${txt}${jp}</div></td>`;
 }
 function rowHtml(c,tag){
   const cells=MONTHS.map(mo=>boxHtml(c,mo.name)).join('');
@@ -975,9 +1059,15 @@ function renderMatrix(){
   const t=document.getElementById('matrix');
   const head='<thead><tr><th class="c-name">Contrato · regra</th>'+MONTHS.map(m=>`<th class="${m.future?'future':''}">${m.name}</th>`).join('')+'</tr></thead>';
   const list=matrixFilter();
-  let jpTotal=0; DATA.contracts.forEach(c=>MONTHS.forEach(mo=>{if(c.m[mo.name].jp)jpTotal++;}));
+  let jpTotal=0, limTotal=0;
+  DATA.contracts.forEach(c=>MONTHS.forEach(mo=>{
+    if(c.m[mo.name].jp)jpTotal++;
+    if(c.m[mo.name].cdd===0)limTotal++;
+    if(c.m[mo.name].fdd===0)limTotal++;
+  }));
   document.getElementById('matrixCount').innerHTML=
     (jpTotal?`<span class="jpchip" id="jpChip"><span class="d"></span>${jpTotal} justificativa${jpTotal>1?'s':''} pendente${jpTotal>1?'s':''}</span> `:'')
+    +(limTotal?`<span class="limchip" id="limChip"><span class="d"></span>${limTotal} entrega${limTotal>1?'s':''} no limite</span> `:'')
     +`<span class="updated">${list.length} de ${DATA.contracts.length} contratos</span>`;
   let body='<tbody>';
   const grouped = !state.status && !state.onlyLate;
@@ -1002,7 +1092,12 @@ function bindCells(){
       const c=DATA.contracts[+b.dataset.c], mn=b.dataset.m, st=statusOf(c,mn), dt=dateOf(c,mn);
       const [cls,lab]=STLAB[st]||['na','—'], stc={op:'st-op',at:'st-at',pe:'st-pe',em:'st-em'}[cls]||'';
       let h=`<b>${c.name}</b><div class="row">${MFULL[mn]} · ${stage==='cli'?'Cliente':'Financeiro'}</div><div class="${stc}">${lab}</div>`;
-      if(dt) h+=`<div class="row">Entregue: <span class="dt">${fmtDate(dt)}</span> · Regra: ${ruleOf(c)||'—'}</div>`;
+      if(dt){
+        const dl=dlOf(c,mn), dd=ddOf(c,mn);
+        h+=`<div class="row">Entregue: <span class="dt">${fmtDate(dt)}</span>`+(dl?` · Prazo: <span class="dt">${fmtDate(dl)}</span>`:'')+`</div>`;
+        h+=`<div class="row">Regra: ${ruleOf(c)||'—'}</div>`;
+        if(dd!=null) h+=`<div class="${dd>0?'st-at':(dd===0?'st-pe':'st-op')}">${marginText(dd)}</div>`;
+      }
       else if(['atraso','no_prazo','pendente'].includes(st)) h+=`<div class="row">Regra: ${ruleOf(c)||'—'}</div>`;
       const ob=c.m[mn].obs; if(ob) h+=`<div class="row" style="margin-top:4px">“${ob}”</div>`;
       if(c.m[mn].jp) h+=`<div class="st-pe" style="margin-top:4px">⚠ Justificativa pendente</div>`;
@@ -1027,7 +1122,8 @@ function contractDetailHtml(idx){
   const c=DATA.contracts[idx], dc=delaysOf(c,'cli'), df=delaysOf(c,'fin');
   let rows='';
   MONTHS.forEach(mo=>{const m=c.m[mo.name];
-    const cd=m.cd?` <span class="dt-date">${fmtDate(m.cd)}</span>`:'', fd=m.fd?` <span class="dt-date">${fmtDate(m.fd)}</span>`:'';
+    const mg=(v)=>v==null?'':` <span class="mg ${v>0?'neg':(v===0?'lim':'pos')}">${v>0?'+'+v+'d':(v===0?'no limite':v+'d')}</span>`;
+    const cd=m.cd?` <span class="dt-date">${fmtDate(m.cd)}</span>`+mg(m.cdd):'', fd=m.fd?` <span class="dt-date">${fmtDate(m.fd)}</span>`+mg(m.fdd):'';
     const ob=m.jp?`<span class="pill p-pe"><span class="d"></span>Justificativa pendente</span>`
       :(m.obs?`<div class="dt-obs">“${m.obs}”</div>`:'<span style="color:var(--fu)">—</span>');
     rows+=`<tr><td class="mth">${mo.name}</td><td>${pill(m.cs)}${cd}</td><td>${pill(m.fs)}${fd}</td><td>${ob}</td></tr>`;});
@@ -1066,6 +1162,20 @@ function jpDetailHtml(){
     html:`<div class="dmeta">Entregas fora do prazo em que a observação ainda é um lembrete de preencher, não uma justificativa.</div>`+
       `<table class="dtable"><thead><tr><th>Mês</th><th>Contrato</th><th>Unidade</th><th>Entrega</th><th>Regra</th></tr></thead><tbody>${b}</tbody></table>`};
 }
+function limDetailHtml(){
+  const items=[];
+  DATA.contracts.forEach(c=>MONTHS.forEach(mo=>{
+    const m=c.m[mo.name];
+    if(m.cdd===0) items.push({c,mn:mo.name,et:'Cliente',dt:m.cd,rule:c.rc});
+    if(m.fdd===0) items.push({c,mn:mo.name,et:'Financeiro',dt:m.fd,rule:c.rf});
+  }));
+  const link=c=>`<span class="lnk" data-ci="${DATA.contracts.indexOf(c)}">${c.name}</span>`;
+  const b=items.map(i=>`<tr><td class="mth">${i.mn}</td><td>${link(i.c)}</td><td>${i.c.unit}</td>`+
+    `<td>${i.et}</td><td><span class="dt-date">${fmtDate(i.dt)}</span></td><td><code>${i.rule||'—'}</code></td></tr>`).join('');
+  return{title:'Entregas no limite do prazo',sub:items.length+' entregas feitas exatamente no último dia',
+    html:`<div class="dmeta">Cumpriram o prazo, mas sem folga alguma — qualquer imprevisto vira atraso. Útil para cobrar antecipação.</div>`+
+      `<table class="dtable"><thead><tr><th>Mês</th><th>Contrato</th><th>Unidade</th><th>Etapa</th><th>Entrega</th><th>Regra</th></tr></thead><tbody>${b}</tbody></table>`};
+}
 function rankAllHtml(){
   const list=globalFilter().map(c=>({c,d:totalDelays(c),dc:delaysOf(c,'cli'),df:delaysOf(c,'fin')})).filter(o=>o.d>0).sort((a,b)=>b.d-a.d);
   const link=c=>`<span class="lnk" data-ci="${DATA.contracts.indexOf(c)}">${c.name}</span>`;
@@ -1084,7 +1194,10 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeModal();});
 document.getElementById('kpis').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset.kpi){e.preventDefault();const d=kpiDetailHtml(e.target.dataset.kpi);openModal(d.title,d.sub,d.html);}});
 document.getElementById('rankAll').addEventListener('click',()=>{const d=rankAllHtml();openModal(d.title,d.sub,d.html);});
-document.addEventListener('click',e=>{if(e.target.closest('#jpChip')){const d=jpDetailHtml();openModal(d.title,d.sub,d.html);}});
+document.addEventListener('click',e=>{
+  if(e.target.closest('#jpChip')){const d=jpDetailHtml();openModal(d.title,d.sub,d.html);}
+  else if(e.target.closest('#limChip')){const d=limDetailHtml();openModal(d.title,d.sub,d.html);}
+});
 document.getElementById('refreshBtn').addEventListener('click',function(){
   document.getElementById('dash').hidden=true;
   document.getElementById('errState').hidden=true;
@@ -1115,8 +1228,11 @@ function openHelp(){
   openModal('Premissas de classificação','Como “no prazo” e “atraso” são definidos',
    `<ul style="margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;line-height:1.7">
     <li>Meses marcados como <code>OK</code> na planilha (jan–mar) = entregues no prazo; não há data exata nesses casos.</li>
-    <li>Com data registrada, compara-se o <b>dia do mês</b> com a regra: <code>ATÉ O DIA N</code> / <code>TODO DIA N</code> → no prazo se dia ≤ N.</li>
-    <li><code>ÚLTIMO DIA DO MÊS</code> → no prazo se dentro do mês. <code>Nº DIA ÚTIL</code> → N-ésimo dia útil (seg–sex, sem feriados).</li>
+    <li>Com data registrada, compara-se a <b>data completa</b> da entrega com a data-limite do mês — e não apenas o dia. Assim uma entrega em 30/04 para o prazo de 05/05 conta como <b>5 dias de antecedência</b>, não como atraso.</li>
+    <li><b>Prazo em dia não útil rola para o próximo dia útil.</b> Vale tanto para <code>ATÉ O DIA N</code> quanto para <code>Nº DIA ÚTIL</code>.</li>
+    <li>Feriados nacionais considerados, incluindo Carnaval, Sexta-feira Santa e Corpus Christi (móveis, calculados pela Páscoa). Feriados estaduais e municipais <b>não</b> entram.</li>
+    <li><code>ÚLTIMO DIA DO MÊS</code> → no prazo se dentro do mês.</li>
+    <li>Entregas feitas exatamente na data-limite aparecem marcadas como <b>no limite</b> (sem folga).</li>
     <li>O <b>Financeiro</b> só é avaliado quando a medição ao cliente já foi entregue; a comparação também é por dia do mês.</li>
     <li>Mês passado sem registro → não aplicável. Mês corrente sem registro → em andamento. Contrato sem entregas no ano → não iniciado.</li>
     <li><code>-</code> na célula = não se aplica (atendimento encerrado ou sem atendimento no mês). Não entra no cálculo.</li>
