@@ -86,10 +86,12 @@ svg{display:block}
 .kic.r{background:var(--at-bg); color:var(--at)} .kic.y{background:var(--pe-bg); color:var(--pe)}
 .kpi .val{font-size:30px; font-weight:600; margin-top:9px; font-family:var(--display); letter-spacing:-.02em; line-height:1}
 .kpi .val small{font-size:15px; color:var(--ink-3); font-weight:500}
-.kpi .val.good{color:var(--op)} .kpi .val.bad{color:var(--at)} .kpi .val.warn{color:var(--pe)}
-.kpi .krow{display:flex; justify-content:space-between; align-items:center; margin-top:7px}
-.kpi .meta{font-size:11px; color:var(--ink-3)}
-.kpi .delta{display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; padding:2px 7px; border-radius:20px}
+.kpi .val.v-good{color:var(--op)} .kpi .val.v-bad{color:var(--at)} .kpi .val.v-warn{color:var(--pe)}
+.kpi .krow{margin-top:9px; display:flex; flex-direction:column; gap:7px; align-items:flex-start}
+.kpi .meta{font-size:11px; color:var(--ink-3); line-height:1.4}
+.kpi .cmp{display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
+.kpi .cmp .vs{font-size:10.5px; color:var(--ink-3)}
+.kpi .delta{display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; line-height:1.2}
 .delta.up{background:var(--op-bg); color:var(--op)} .delta.down{background:var(--at-bg); color:var(--at)} .delta.flat{background:#eef1f3; color:var(--ink-3)}
 .delta .ic{width:12px; height:12px; stroke-width:2.4}
 .kpi .drill{position:absolute; right:16px; bottom:15px; font-size:10.5px; color:var(--brand); font-weight:600; opacity:0; transition:opacity .12s}
@@ -378,7 +380,7 @@ table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
 .confgrid{display:grid; grid-template-columns:auto 1.1fr 1.4fr; gap:26px; align-items:start}
 .confbig{padding-right:24px; border-right:1px solid var(--line); min-width:150px}
 .cb-val{font-family:var(--display); font-size:38px; font-weight:600; letter-spacing:-.02em; line-height:1; color:var(--brand)}
-.cb-val.warn{color:var(--pe)} .cb-val.bad{color:var(--at)}
+.cb-val.v-warn{color:var(--pe)} .cb-val.v-bad{color:var(--at)}
 .cb-lab{font-size:12px; color:var(--ink-2); margin-top:6px}
 .cb-sub{font-size:11.5px; color:var(--ink-3); margin-top:8px; line-height:1.5}
 .ch3{font-size:12.5px; color:var(--ink); margin-bottom:11px; font-weight:600}
@@ -391,7 +393,10 @@ table.dtable{width:100%; border-collapse:collapse; font-size:12.5px}
 .pbar span{display:block; height:100%; background:var(--brand); border-radius:4px}
 .pn{font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink)}
 .cmonths{display:flex; gap:8px; flex-wrap:wrap}
-.cmon{border:1px solid var(--line-strong); border-radius:9px; padding:8px 12px; min-width:66px; text-align:center; cursor:default}
+.cmon{border:1px solid var(--line-strong); border-radius:9px; padding:8px 12px; min-width:66px; text-align:center; cursor:default; transition:border-color .12s, box-shadow .12s}
+.cmon.clk{cursor:pointer}
+.cmon.clk:hover{border-color:var(--at); box-shadow:0 2px 8px rgba(216,74,68,.14)}
+.cmon.clk:focus-visible{outline:2px solid var(--at); outline-offset:2px}
 .cmon.pend{border-color:rgba(216,74,68,.35); background:var(--at-bg)}
 .cmon .cm{font-size:10.5px; color:var(--ink-3); font-weight:600}
 .cmon .cv{font-family:var(--display); font-size:19px; font-weight:600; line-height:1.2; color:var(--op)}
@@ -1117,11 +1122,6 @@ const ICO={
   dollar:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.5 9.2A2.4 2.4 0 0 0 12 8c-1.5 0-2.5.8-2.5 2s1 1.8 2.5 2 2.5.9 2.5 2-1 2-2.5 2a2.4 2.4 0 0 1-2.5-1.2"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/>',
   clip:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 11h6M9 15h4"/>'};
-function folga(list,which){
-  const m=allMargins(list,which); if(!m.length) return '';
-  const avg=m.reduce((a,b)=>a+b,0)/m.length;
-  return ' · folga média '+Math.abs(avg).toFixed(1).replace('.',',')+'d';
-}
 function renderKpis(){
   const list=globalFilter();
   const active=list.filter(c=>c.active).length;
@@ -1129,20 +1129,20 @@ function renderKpis(){
   const pc=pct(cc.np,cc.at), pf=pct(fc.np,fc.at);
   let delays=cc.at+fc.at, pend=0;
   list.forEach(c=>{['cs','fs'].forEach(k=>{const s=c.m[CURNAME][k]; if(s==='pendente'||s==='em_andamento')pend++;});});
-  const clsP=v=>v===null?'':v>=90?'good':v>=75?'warn':'bad';
+  const clsP=v=>v===null?'':v>=90?'v-good':v>=75?'v-warn':'v-bad';
   const info=t=>`<svg class="info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/><title>${t}</title></svg>`;
   const K=[
     {key:'total',cor:'k-teal',ic:'doc',ick:'g',lab:'Contratos monitorados',tip:'Total de contratos no calendário (todas as unidades, salvo filtro).',val:list.length,meta:active+' ativos no ano'},
-    {key:'cli',cor:'k-green',ic:'users',ick:'g',lab:`No prazo — Cliente (${CURNAME.toLowerCase()})`,tip:'% de medições entregues ao cliente dentro da regra de prazo, no mês de referência.',val:pc===null?'—':pc+'<small>%</small>',cls:clsP(pc),meta:cc.np+' no prazo · '+cc.at+' atraso'+folga(list,'cli'),delta:deltaHtml('cli',list)},
-    {key:'fin',cor:'k-amber',ic:'dollar',ick:'a',lab:`No prazo — Financeiro (${CURNAME.toLowerCase()})`,tip:'% de medições liberadas ao financeiro dentro da regra, no mês de referência.',val:pf===null?'—':pf+'<small>%</small>',cls:clsP(pf),meta:fc.np+' no prazo · '+fc.at+' atraso'+folga(list,'fin'),delta:deltaHtml('fin',list)},
-    {key:'atrasos',cor:'k-red',ic:'clock',ick:'r',lab:'Atrasos no mês',tip:'Entregas após a data-regra no mês (cliente + financeiro).',val:delays,cls:delays?'bad':'good',meta:'cliente + financeiro'},
-    {key:'pend',cor:'k-gold',ic:'clip',ick:'y',lab:'Pendências no mês',tip:'Itens ainda a enviar ou em andamento no mês (medição ou faturamento).',val:pend,cls:pend?'warn':'good',meta:'a enviar / em andamento'},
+    {key:'cli',cor:'k-green',ic:'users',ick:'g',lab:`No prazo — Cliente (${CURNAME.toLowerCase()})`,tip:'% de medições entregues ao cliente dentro da regra de prazo, no mês de referência.',val:pc===null?'—':pc+'<small>%</small>',cls:clsP(pc),meta:cc.np+' no prazo · '+cc.at+' atraso',delta:deltaHtml('cli',list)},
+    {key:'fin',cor:'k-amber',ic:'dollar',ick:'a',lab:`No prazo — Financeiro (${CURNAME.toLowerCase()})`,tip:'% de medições liberadas ao financeiro dentro da regra, no mês de referência.',val:pf===null?'—':pf+'<small>%</small>',cls:clsP(pf),meta:fc.np+' no prazo · '+fc.at+' atraso',delta:deltaHtml('fin',list)},
+    {key:'atrasos',cor:'k-red',ic:'clock',ick:'r',lab:'Atrasos no mês',tip:'Entregas após a data-regra no mês (cliente + financeiro).',val:delays,cls:delays?'v-bad':'v-good',meta:'cliente + financeiro'},
+    {key:'pend',cor:'k-gold',ic:'clip',ick:'y',lab:'Pendências no mês',tip:'Itens ainda a enviar ou em andamento no mês (medição ou faturamento).',val:pend,cls:pend?'v-warn':'v-good',meta:'a enviar / em andamento'},
   ];
   document.getElementById('kpis').innerHTML=K.map(k=>
     `<div class="kpi clickable ${k.cor}" data-kpi="${k.key}" tabindex="0" role="button">
       <div class="khead"><div class="lab">${k.lab} ${info(k.tip)}</div><div class="kic ${k.ick}"><svg class="ic" viewBox="0 0 24 24">${ICO[k.ic]}</svg></div></div>
       <div class="val ${k.cls||''}">${k.val}</div>
-      <div class="krow"><span class="meta">${k.meta}</span>${k.delta?k.delta+'<span class="meta">vs '+(PREVNAME||'').toLowerCase()+'/26</span>':''}</div>
+      <div class="krow"><span class="meta">${k.meta}</span>${k.delta?`<span class="cmp">${k.delta}<span class="vs">vs ${(PREVNAME||'').toLowerCase()}/26</span></span>`:''}</div>
       <span class="drill">Ver detalhamento →</span>
     </div>`).join('');
 }
@@ -1223,9 +1223,9 @@ function renderConf(){
   const pct=s.entregas? Math.round(s.conf/s.entregas*100):null;
   const el=document.getElementById('confPct');
   el.textContent = pct===null?'—':pct+'%';
-  el.className='cb-val '+(pct===null?'':(pct>=90?'':(pct>=70?'warn':'bad')));
+  el.className='cb-val '+(pct===null?'':(pct>=90?'':(pct>=70?'v-warn':'v-bad')));
   document.getElementById('confSub').innerHTML =
-    s.entregas? `${s.conf} de ${s.entregas} entregas<br><b style="color:var(--at)">${s.pend}</b> ainda sem conferência`
+    s.entregas? `${s.conf} de ${s.entregas} entregas<br><b style="color:var(--at)">${s.pend}</b> ainda ${s.pend===1?'sem conferência':'sem conferência'}`
               : 'Nenhuma entrega registrada no recorte.';
 
   const nomes=['Thais','Mayquele','Ramon'];
@@ -1241,7 +1241,7 @@ function renderConf(){
   const past=MONTHS.filter(m=>m.idx<=CUR);
   document.getElementById('confMonths').innerHTML = past.map(mo=>{
     const p=s.pendMes[mo.name], ok=s.porMes[mo.name];
-    return `<div class="cmon${p?' pend':''}" title="${ok} conferidas, ${p} pendentes">`+
+    return `<div class="cmon${p?' pend clk':''}" ${p?`data-cmon="${mo.name}" role="button" tabindex="0"`:''} title="${ok} conferidas, ${p} pendentes">`+
       `<div class="cm">${mo.name}</div><div class="cv">${p||'✓'}</div>`+
       `<div class="cs">${p?'a conferir':'ok'}</div></div>`;
   }).join('');
@@ -1414,26 +1414,34 @@ function limDetailHtml(){
     html:`<div class="dmeta">Cumpriram o prazo, mas sem folga alguma — qualquer imprevisto vira atraso. Útil para cobrar antecipação.</div>`+
       `<table class="dtable"><thead><tr><th>Mês</th><th>Contrato</th><th>Unidade</th><th>Etapa</th><th>Entrega</th><th>Regra</th></tr></thead><tbody>${b}</tbody></table>`};
 }
-function confDetailHtml(){
+function confDetailHtml(soMes){
   const list=globalFilter(), s=confStats(list);
   const itens=[];
   list.forEach(c=>MONTHS.forEach(mo=>{
+    if(soMes && mo.name!==soMes) return;
     const m=c.m[mo.name];
     if(ENTREGUE.includes(m.cs)&&!m.conf&&!m.chkna)
       itens.push({c,mn:mo.name,dt:m.cd,st:m.cs});
   }));
   itens.sort((a,b)=>MONTHS.findIndex(x=>x.name===b.mn)-MONTHS.findIndex(x=>x.name===a.mn));
   const link=c=>`<span class="lnk" data-ci="${DATA.contracts.indexOf(c)}">${c.name}</span>`;
-  const b=itens.map(i=>`<tr><td class="mth">${i.mn}</td><td>${link(i.c)}</td><td>${i.c.unit}</td>`+
+  const b=itens.map(i=>`<tr>${soMes?'':`<td class="mth">${i.mn}</td>`}<td>${link(i.c)}</td><td>${i.c.unit}</td>`+
     `<td>${i.dt?'<span class=dt-date>'+fmtDate(i.dt)+'</span>':'<span style=color:var(--fu)>OK</span>'}</td>`+
     `<td>${pill(i.st)}</td></tr>`).join('');
   const pct=s.entregas?Math.round(s.conf/s.entregas*100):0;
-  return{title:'Medições a conferir',sub:itens.length+' entregas ainda sem conferência cruzada',
-    html:`<div class="dsum"><span class="b"><b class="op">${s.conf}</b>conferidas</span>`+
-      `<span class="b"><b class="at">${s.pend}</b>a conferir</span>`+
-      `<span class="b"><b>${pct}%</b>do total</span></div>`+
+  const tit = soMes? 'A conferir — '+cap(MFULL[soMes]) : 'Medições a conferir';
+  const plural=(n,s,pl)=>n+' '+(n===1?s:pl);
+  const sub = soMes? plural(itens.length,'entrega','entregas')+' de '+MFULL[soMes]+' sem conferência'
+                   : plural(itens.length,'entrega','entregas')+' ainda sem conferência cruzada';
+  const resumo = soMes? `<div class="dsum"><span class="b"><b class="at">${itens.length}</b>a conferir em ${soMes}</span>`+
+        `<span class="b"><b class="op">${s.porMes[soMes]||0}</b>já conferidas no mês</span></div>`
+      : `<div class="dsum"><span class="b"><b class="op">${s.conf}</b>conferidas</span>`+
+        `<span class="b"><b class="at">${s.pend}</b>a conferir</span>`+
+        `<span class="b"><b>${pct}%</b>do total</span></div>`;
+  return{title:tit,sub:sub,
+    html:resumo+
       `<div class="dmeta">Entregas registradas cuja coluna CHECK ainda está vazia. Conferentes: Thais, Mayquele ou Ramon.</div>`+
-      `<table class="dtable"><thead><tr><th>Mês</th><th>Contrato</th><th>Unidade</th><th>Entrega</th><th>Status</th></tr></thead><tbody>${b||'<tr><td colspan=5 style="padding:14px;color:var(--fu)">Tudo conferido.</td></tr>'}</tbody></table>`};
+      `<table class="dtable"><thead><tr>${soMes?'':'<th>Mês</th>'}<th>Contrato</th><th>Unidade</th><th>Entrega</th><th>Status</th></tr></thead><tbody>${b||'<tr><td colspan=5 style="padding:14px;color:var(--fu)">Tudo conferido.</td></tr>'}</tbody></table>`};
 }
 function rankAllHtml(){
   const list=globalFilter().map(c=>({c,d:totalDelays(c),dc:delaysOf(c,'cli'),df:delaysOf(c,'fin')})).filter(o=>o.d>0).sort((a,b)=>b.d-a.d);
@@ -1450,7 +1458,11 @@ document.addEventListener('click',e=>{
   const ci=e.target.closest('[data-ci]'); if(ci){const i=+ci.dataset.ci;openModal(DATA.contracts[i].name,DATA.contracts[i].unit,contractDetailHtml(i));return;}
   if(e.target===modal||e.target.id==='mClose'){closeModal();}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeModal();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!modal.hidden)closeModal();
+  const cm=e.target.closest&&e.target.closest('[data-cmon]');
+  if(cm&&(e.key==='Enter'||e.key===' ')){e.preventDefault();const d=confDetailHtml(cm.dataset.cmon);openModal(d.title,d.sub,d.html);}
+});
 document.getElementById('kpis').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset.kpi){e.preventDefault();const d=kpiDetailHtml(e.target.dataset.kpi);openModal(d.title,d.sub,d.html);}});
 document.getElementById('rankAll').addEventListener('click',()=>{const d=rankAllHtml();openModal(d.title,d.sub,d.html);});
 document.getElementById('confAll').addEventListener('click',()=>{const d=confDetailHtml();openModal(d.title,d.sub,d.html);});
@@ -1458,6 +1470,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#jpChip')){const d=jpDetailHtml();openModal(d.title,d.sub,d.html);}
   else if(e.target.closest('#limChip')){const d=limDetailHtml();openModal(d.title,d.sub,d.html);}
   else if(e.target.closest('#confChip')){const d=confDetailHtml();openModal(d.title,d.sub,d.html);}
+  else { const cm=e.target.closest('[data-cmon]');
+         if(cm){const d=confDetailHtml(cm.dataset.cmon);openModal(d.title,d.sub,d.html);} }
 });
 document.getElementById('refreshBtn').addEventListener('click',function(){
   document.getElementById('dash').hidden=true;
